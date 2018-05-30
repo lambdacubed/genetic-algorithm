@@ -34,6 +34,9 @@ DAQ_DEVICES = ["Andor", "NI_DAQ", "IC"]
 DRV_SUCCESS = 20002
 DRV_IDLE = 20073
 
+# Pixel formats for imaging source cameras as strings which organize pixels top down instead of down up
+PIXEL_FORMAT_TOP_DOWN = ['Y800', 'YGB0', 'YGB1', 'UYBY', 'Y16']
+
 class data_acqusition(object):
     """This object is used to initialize, acquire data from, and shut down various different hardware for data acquisition
     """
@@ -310,23 +313,30 @@ class data_acqusition(object):
                             getattr(self.cam,cam_properties[attribute_index]).value = float(initialize_array[attribute_index])
                         print("Set the camera", cam_properties[attribute_index], "to", getattr(self.cam,cam_properties[attribute_index]).value, "within the range", getattr(self.cam,cam_properties[attribute_index]).range)
 
+        self.software_trigger = (initialize_array[len(cam_properties)]) == "True"
+        print(self.software_trigger)
         formats = self.cam.list_video_formats()
         print("\nThese are the available video formats:")
         print(formats)
         print("Please select video format to use by inputting the index of the format.")
         print("The indices go from 0 to ", len(formats)-1)
         while True:
-            index = int(input())
-            if ((index <= len(formats)-1) and (index >= 0)):
-                self.cam.set_video_format(formats[index])
+            self.video_index = int(input())
+            if ((self.video_index <= len(formats)-1) and (self.video_index >= 0)):
+                self.cam.set_video_format(formats[self.video_index])
                 break
             else:
                 print("You didn't enter a correct index.")
-    
+        current_video_format = self.cam.get_video_format(self.video_index)
+        if any(string in str(current_video_format) for string in PIXEL_FORMAT_TOP_DOWN):
+            self.flip_image = True
+        else:
+            self.flip_image = False
+
         self.cam.enable_continuous_mode(True)        # image in continuous mode
         self.cam.start_live(show_display=False)       # start imaging
 
-        self.cam.enable_trigger(True)                # camera will wait for trigger
+        self.cam.enable_trigger(self.software_trigger)                # camera will wait for trigger
         if not self.cam.callback_registered:
             self.cam.register_frame_ready_callback() # needed to wait for frame ready callback
 
@@ -433,15 +443,18 @@ class data_acqusition(object):
     
     def __acquire_IC(self):
         self.cam.reset_frame_ready() 
-        
-        self.cam.send_trigger()
+
+        if (self.software_trigger):
+            self.cam.send_trigger()
 
         self.cam.wait_til_frame_ready(1000)              # wait for frame ready due to trigger
 
         data, width, height, depth = self.cam.get_image_data()
         frame = np.ndarray(buffer=data,dtype=np.uint8,shape=(self.height, self.width, self.depth))
         frameout = copy.deepcopy(frame)
-        plt.imshow(frameout)
+        if self.flip_image:
+            frameout = np.flipud(frameout)
+        plt.imshow(frameout, cmap=plt.get_cmap('gray'))
         plt.colorbar()
         plt.show()
 
@@ -502,32 +515,36 @@ def ic():
     cam.reset_properties()
 
     # change camera properties
-    print(cam.list_property_names())         # ['gain', 'exposure', 'hue', etc...]
+    # print(cam.list_property_names())         # ['gain', 'exposure', 'hue', etc...]
     cam.gain.auto = False                    # enable auto gain
     
-    cam.exposure.value = -5
+    cam.exposure.value = 100
 
     # change camera settings
     formats = cam.list_video_formats()
     # print formats
-    print(formats)
+    # print(formats)
     cam.set_video_format(formats[0])        # use first available video format
     cam.enable_continuous_mode(True)        # image in continuous mode
     cam.start_live(show_display=False)       # start imaging
-
-    cam.enable_trigger(True)                # camera will wait for trigger
+    print(cam.is_triggerable())
+    cam.enable_trigger(False)                # camera will wait for trigger
     if not cam.callback_registered:
         cam.register_frame_ready_callback() # needed to wait for frame ready callback
 
     cam.reset_frame_ready() 
         
-    cam.send_trigger()
+    # cam.send_trigger()
 
     cam.wait_til_frame_ready(1000)              # wait for frame ready due to trigger
 
     data, width, height, depth = cam.get_image_data()
     frame = np.ndarray(buffer=data,dtype=np.uint8,shape=(height, width, depth))
     frameout = copy.deepcopy(frame).astype(float)
+    plt.imshow(frameout, cmap=plt.get_cmap('gray'))
+    plt.colorbar()
+    plt.show()
+
     plt.imsave('figure_of_merit.png', frameout, cmap=cm.gray)
     del frame
     # print(frameout.max())
