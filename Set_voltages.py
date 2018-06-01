@@ -82,7 +82,7 @@ if __name__ == "__main__":
 	# send_genes()
 
 	# To send a file, comment the line above and uncomment the next two lines
-	send_file()
+	# send_file()
 
 	# To test individual actuators run this function
-	#test_actuators()
+	test_actuators()

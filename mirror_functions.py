@@ -235,7 +235,7 @@ def send_to_board(voltages0, voltages1):
     # This is the code for running the LabView VI which communicates with the deformable mirror 
     
     LabVIEW = win32com.client.Dispatch("Labview.Application")   # Start running Labview
-    pci0VI = LabVIEW.getvireference('C:\\Users\lambdacubed\Desktop\Mark\genetic_algorithm_python\LabView send volt to board\Volt_to_board_0.vi')    # path to the LabVIEW VI for the first board
+    pci0VI = LabVIEW.getvireference('C:\\Users\lambdacubed\Desktop\Mark\GA\LabView send volt to board\Volt_to_board_0.vi')    # path to the LabVIEW VI for the first board
     pci0VI._FlagAsMethod("Call")    # Flag "Call" as the method to run the VI in this path
     pci0VI.setcontrolvalue('error in (no error)', 0)   # set error in
     pci0VI.setcontrolvalue('addresses', ACTUATOR_ADDRESSES[0])   # set addresses
@@ -249,7 +249,7 @@ def send_to_board(voltages0, voltages1):
         input()
         exit()
 
-    pci1VI = LabVIEW.getvireference('C:\\Users\lambdacubed\Desktop\Mark\genetic_algorithm_python\LabView send volt to board\Volt_to_board_1.vi')    # path to the LabVIEW VI for the second board
+    pci1VI = LabVIEW.getvireference('C:\\Users\lambdacubed\Desktop\Mark\GA\LabView send volt to board\Volt_to_board_1.vi')    # path to the LabVIEW VI for the second board
     pci1VI._FlagAsMethod("Call")    # Flag "Call" as the method to run the VI in this path
     pci1VI.setcontrolvalue('error in (no error)', 0)   # set error in
     pci1VI.setcontrolvalue('addresses', ACTUATOR_ADDRESSES[1])   # set addresses

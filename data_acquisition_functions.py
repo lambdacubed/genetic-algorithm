@@ -7,7 +7,6 @@ NI_DAQ_voltage() -- acquires a voltage from the NI hardware (usually connected t
 
 """
 # TODO comment ic stuff
-# TODO see if different video formats will need to be taken care of
 
 import figure_of_merit_functions as figure_of_merit_f
 
@@ -240,18 +239,26 @@ class data_acqusition(object):
         self.pci0VI = LabVIEW.getvireference(directory_path + '\\NI_DAQ\\get_average_photodiode_voltage.vi')    # get the path to the LabVIEW VI
     
     def __initialize_IC(self, initialize_array):
-        """TODO comments"""
-        self.ic_ic = IC_ImagingControl()
-        self.ic_ic.init_library()
+        """Initialize the Imaging source camera to be ready to read in voltages
+        
+        Parameters
+        ----------
+        initialize_array : initialization array, numpy array
+            This contains information from the "NI_DAQ/NI_DAQ properties.ini" file 
+        """        
+        self.ic_ic = IC_ImagingControl()    # initialize the imaging control grabber
+        self.ic_ic.init_library()   # Use the grabber to initialze the library of IC functions we can use
 
+        # Determine the Imaging Source cameras connected to the computer
         cam_names = self.ic_ic.get_unique_device_names()
-        if (len(cam_names) ==0):
+        if (len(cam_names) ==0):    # no IC camera is connected
             print("Error: No IC cameras connected to the computer.")
             exit()
         print("\nThese are the available cameras:")
         print(cam_names)
         print("Please select an IC camera to use by inputting the index of the camera.")
         print("The indices go from 0 to ", len(cam_names)-1)
+        # Iterate through an infinite loop until the user defines which camera they want to use
         while True:
             index = int(input())
             if ((index <= len(cam_names)-1) and (index >= 0)):
