@@ -6,7 +6,6 @@ ic() -- Grabs an image from an IC camera
 NI_DAQ_voltage() -- acquires a voltage from the NI hardware (usually connected to the lock-in amplifier)
 
 """
-# TODO comment ic stuff
 
 import figure_of_merit_functions as figure_of_merit_f
 
@@ -258,6 +257,7 @@ class data_acqusition(object):
         print(cam_names)
         print("Please select an IC camera to use by inputting the index of the camera.")
         print("The indices go from 0 to ", len(cam_names)-1)
+
         # Iterate through an infinite loop until the user defines which camera they want to use
         while True:
             index = int(input())
@@ -267,8 +267,10 @@ class data_acqusition(object):
             else:
                 print("You didn't enter a correct index.")
 
-        self.cam.open()
+        self.cam.open() # open the camera they chose
 
+
+        # Go through an infinite loop with user to decide to initialize with the .ini file or by setting all of the values
         print("\nWould you like to set all of the camera initialization values yourself, or use the IC properties.ini file?")
         print('Enter either "set" for setting all of the values or "ini" for the .ini file')
         while True:
@@ -282,13 +284,15 @@ class data_acqusition(object):
             else:
                 print("You didn't enter 'set' or 'ini'. Try again.")
 
+        # reset all properties before setting them
         self.cam.reset_properties()
+        
+        # Go through each property available and set its value
         cam_properties = self.cam.list_property_names()
         print("Note: this only goes through the camera properties available for this specific camera.")
-
-        for attribute_index in range(len(cam_properties)):
-            if (getattr(self.cam,cam_properties[attribute_index]).available == True):
-                if (set_all == True):   # if they want to go through everything
+        for attribute_index in range(len(cam_properties)):      # for loop through each of the camera properties
+            if (getattr(self.cam,cam_properties[attribute_index]).available == True):   # if the attribute can be set
+                if (set_all == True):   # if the user wants to set everything 
                     print("You are setting the", cam_properties[attribute_index])
                     print("Its current value is ", getattr(self.cam,cam_properties[attribute_index]).value)
                     print("The range of values you can set this to is ", getattr(self.cam,cam_properties[attribute_index]).range)
@@ -303,30 +307,34 @@ class data_acqusition(object):
                             print("Type in what you'd like to change this property to instead")
                         else:
                             print("You didn't enter a y or an n. Enter what value you'd like to change the property to again.")
-                else:
-                    if (initialize_array[attribute_index] == "auto"):
+                else:   # if the user is using the .ini file
+                    if (initialize_array[attribute_index] == "auto"):   # if the .ini file has "auto" for this property
                         if (getattr(self.cam,cam_properties[attribute_index]).auto_available == True):
                             getattr(self.cam,cam_properties[attribute_index]).auto = True
                             print("Set the camera", cam_properties[attribute_index], "to auto")
                         else:
                             print("Auto setting unavailable for", cam_properties[attribute_index])
                             print("Did not set", cam_properties[attribute_index])
-                    elif (initialize_array[attribute_index] == "none"):
+                    elif (initialize_array[attribute_index] == "none"): # if the .ini file has "none" for this property
                         print("Did not set", cam_properties[attribute_index])
-                    else:
+                    else:   # if the .ini file has a value for its setting
                         if (type(getattr(self.cam,cam_properties[attribute_index]).value) == int):
                             getattr(self.cam,cam_properties[attribute_index]).value = int(initialize_array[attribute_index])
                         if (type(getattr(self.cam,cam_properties[attribute_index]).value) == float):
                             getattr(self.cam,cam_properties[attribute_index]).value = float(initialize_array[attribute_index])
                         print("Set the camera", cam_properties[attribute_index], "to", getattr(self.cam,cam_properties[attribute_index]).value, "within the range", getattr(self.cam,cam_properties[attribute_index]).range)
 
-        self.software_trigger = (initialize_array[len(cam_properties)]) == "True"
-        print(self.software_trigger)
+        # the last property in the .ini file is whether the person wants the trigger
+        self.software_trigger = (initialize_array[len(cam_properties)]) == "True"   # set the software trigger to True or False
+
+        # Determine the video format the user would like to use
         formats = self.cam.list_video_formats()
         print("\nThese are the available video formats:")
         print(formats)
         print("Please select video format to use by inputting the index of the format.")
         print("The indices go from 0 to ", len(formats)-1)
+
+        # Iterate through an infinite loop until the user defines which video format they want to use
         while True:
             self.video_index = int(input())
             if ((self.video_index <= len(formats)-1) and (self.video_index >= 0)):
@@ -334,7 +342,9 @@ class data_acqusition(object):
                 break
             else:
                 print("You didn't enter a correct index.")
-        current_video_format = self.cam.get_video_format(self.video_index)
+        current_video_format = self.cam.get_video_format(self.video_index)  # set the video format
+
+        # if the video format stores the pixels left to right and top to bottom, set flip_image to True
         if any(string in str(current_video_format) for string in PIXEL_FORMAT_TOP_DOWN):
             self.flip_image = True
         else:
@@ -347,8 +357,11 @@ class data_acqusition(object):
         if not self.cam.callback_registered:
             self.cam.register_frame_ready_callback() # needed to wait for frame ready callback
 
+        # determine the image dimensions
         self.width, self.height, depth, color_format = self.cam.get_image_description()
-        self.depth = depth // 8 # I have no idea why the library does this
+        self.depth = depth // 8 # I have no idea why the open source pyicic library does this
+
+        # take an image because for some cameras, the first image doesn't work correctly and then the rest work
         self.acquire()
 
     def figure_of_merit(self):
@@ -380,11 +393,6 @@ class data_acqusition(object):
     
     def __acquire_andor(self):
         """This function acquires an image from the andor camera and returns the image
-
-        Returns
-        -------
-        image : image, numpy 2d array
-            This is the image which the Andor camera captured
         """
 
         # Wait until the camera is in an idle state
@@ -427,11 +435,6 @@ class data_acqusition(object):
     
     def __acquire_NI_DAQ(self):
         """Compute figure of merit that is average voltage reading from DAQ
-        
-        Returns
-        -------
-        voltage: voltage, variable type unknown -> maybe float
-            the averaged voltage read by the NI DAQ hardware
         """
         
         self.pci0VI._FlagAsMethod("Call")    # Flag "Call" as the method to run the VI in this path
@@ -449,25 +452,29 @@ class data_acqusition(object):
         self.voltage = voltage
     
     def __acquire_IC(self):
-        self.cam.reset_frame_ready() 
+        """Compute figure of merit that is average voltage reading from DAQ
+        """
+        self.cam.reset_frame_ready()    # reset the frame ready flag to False so that we can wait for the frame to be ready
 
         if (self.software_trigger):
-            self.cam.send_trigger()
+            self.cam.send_trigger()     # send a software trigger if it was specified to do so
 
         self.cam.wait_til_frame_ready(1000)              # wait for frame ready due to trigger
 
-        data, width, height, depth = self.cam.get_image_data()
-        frame = np.ndarray(buffer=data,dtype=np.uint8,shape=(self.height, self.width, self.depth))
-        frameout = copy.deepcopy(frame)
-        if self.flip_image:
-            frameout = np.flipud(frameout)
-        plt.imshow(frameout, cmap=plt.get_cmap('gray'))
-        plt.colorbar()
-        plt.show()
+        data, width, height, depth = self.cam.get_image_data()  # Get the image from the camera
+        frame = np.ndarray(buffer=data,dtype=np.uint8,shape=(self.height, self.width, self.depth))  # turn this buffer into a numpy array
+        frameout = copy.deepcopy(frame) # deep copy this data so that if anything overwrites the camera memory, we still have the image
 
-        # self.cam.save_image(b"image.jpg", 1)
-        del frame
-        self.frameout = frameout
+        if self.flip_image:     # if the pixels are written top to bottom, flip the image upside down
+            frameout = np.flipud(frameout)
+
+        #plt.imshow(frameout, cmap=plt.get_cmap('gray'))
+        #plt.colorbar()
+        #plt.show()
+        
+        del frame   # take care of memory allocation
+
+        self.frameout = frameout    # save the image
         
     
     def shut_down(self):
@@ -492,7 +499,8 @@ class data_acqusition(object):
         return
     
     def __shut_down_IC(self):
-        """TODO"""
+        """Snut down the camera and the IC grabber
+        """
         self.cam.stop_live() # stop capturing video from the camera
         self.cam.close() # shut down the camera
 
