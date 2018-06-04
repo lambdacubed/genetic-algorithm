@@ -555,11 +555,20 @@ class data_acqusition(object):
 
 
 if __name__ == "__main__":
+    num_tests = 1   # the number of times to acquire data from the device
 
-    device = data_acqusition("IC", 4)
-    for i in range(1):
-        device.figure_of_merit()
-    device.shut_down()
-    # # device = data_acqusition("Andor", 1)
-    # device.acquire()
-    # device.shut_down()
+    # determine which device to test
+    print("Which device would you like to test?\nThe options are the following: \n", DAQ_DEVICES)
+    print("Enter an index from 0 to ", len(DAQ_DEVICES)-1)
+    while True:
+        index = input()
+        if 0 <= index < len(DAQ_DEVICES):
+            break
+        else:
+            print("You didn't enter a correct index. Try again.")
+
+
+    device = data_acqusition(DAQ_DEVICES[index], "test")    # initialize the device
+    for i in range(num_tests):  # for num_test times
+        device.figure_of_merit()    # acquire data from the device
+    device.shut_down()  # shut the device down

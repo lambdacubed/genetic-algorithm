@@ -10,7 +10,8 @@ test_actuators -- test the voltages for individual actuators
 import numpy as np  # general useful python library
 
 import file_functions as file_f     # used to read from files
-
+import mirror_communication_devices as mirror_devices
+import mirrors
 
 def send_file():
     """ This sets voltages on the mirror from a file of actuator voltages
@@ -28,11 +29,13 @@ def send_genes():
     """This sets constant voltages on the mirror which are determined within the function
     """
     num_genes = 37  # there are 37 mirror voltages
-    constant_voltage = 0
-    test_voltages = np.zeros(37) + constant_voltage   # create array of 37 constant voltages
+    mirror = mirrors.XineticsDM_37square()    # initialize the information about the mirror
+    print("Enter the voltage you'd like to send to the mirror")
+    while True:
+        constant_voltage = input()
+    test_voltages = np.zeros(num_genes) + constant_voltage   # create array of 37 constant voltages
     print('This is the genes:\n',test_voltages)    # show the operator what the actuator voltages are
     print('You are setting voltages for deformable mirror')
-    dm_actuators = mirror_f.actuator_array()    # initialize the information about the mirror
     mirror_f.write_to_mirror(test_voltages, dm_actuators)  # write the voltages to the mirror
 
 
@@ -77,11 +80,30 @@ def test_actuators():
 
 
 if __name__ == "__main__":
-	# To send a constant voltage to the mirror, uncomment the line directly below and comment the other lines
-	# send_genes()
 
-	# To send a file, comment the line above and uncomment the next two lines
-	# send_file()
+    print('Are you sending voltages over PCI or USB? Enter "PCI" or "USB".')
+    while True:
+        mirror_device_string = input()
+        if mirror_device_string == "PCI":
+            mirror_comm_device = mirror_devices.initialize_device(mirror_device_string)
+        elif mirror_device_string == "USB":
+            mirror_comm_device = mirror_devices.initialize_device(mirror_device_string)
+        else:
+            print("You didn't enter a correct device. Try again.")
 
-	# To test individual actuators run this function
-	test_actuators()
+    # TODO enter in mirror comm device to the functions and change them to stand on their own. Also put this in the README for sending voltages
+    print("Would you like to send a constant voltage to the mirror, send a file to the mirror, or test individual actuators?")
+    print('Enter "voltage", "file", or "test" to specify which one you would like to do.')
+    while True:
+        set_voltage_setting = input()
+        if set_voltage_setting == "voltage":
+            send_genes()
+            break
+        elif set_voltage_setting == "file":
+            send_file()
+            break
+        elif set_voltage_setting == "test":
+            test_actuators()
+            break
+        else:
+            print("You didn't enter a valid input. Try again.")

@@ -11,7 +11,7 @@ HOW TO RUN
 
 
 INITIALIZATION SETTINGS
-Change the default running values in genetic_algorithm.ini
+Change the default values of the genetic algorithm in genetic_algorithm.ini
 
 
 DATA ACQUISITION SETTINGS
@@ -20,6 +20,10 @@ For example, navigate to "Andor/Andor properties.ini" and adjust those initializ
 
 Note: the program always searches for the highest figure of merit.
 If you want to optimize for the smallest value just make your figure of merit negative 
+
+
+HOW TO TEST A DATA ACQUISITION DEVICE
+Simply run data_acquisition_functions.py
 
 
 HOW TO SET UP A NEW DATA ACQUISITION DEVICE

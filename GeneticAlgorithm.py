@@ -58,7 +58,7 @@ def genetic_algorithm():
     print('You are running the genetic algorithm')
     
     #This function sets all of the values of the number of parents, children, and mutation amount
-    num_genes, num_init_parents, num_init_children, init_voltage, filename, num_parents, num_children, mutation_percentage, data_acquisition_device, mirror_comm_device, fom_num = initialization_f.initialize()
+    num_genes, num_init_parents, num_init_children, init_voltage, filename, num_parents, num_children, mutation_percentage, data_acquisition_device, mirror_device_string, fom_num = initialization_f.initialize()
     """Note: To change the default values, go into genetic_algorithm.ini"""
     
     print('\nNOTE: LabView must be open in order to run the program\n')
@@ -79,7 +79,7 @@ def genetic_algorithm():
     start_time = time.time()    # determine the time when the algorithm starts
     mirror = mirrors.XineticsDM_37square() # initialize the class to determine if actuator voltages break the mirror or not
     daq_device = data_acq_f.data_acqusition(data_acquisition_device, fom_num)	# open and initialize the data acquisition device being used
-    mirror_comm_device = mirror_device.initialize_device(mirror_comm_device)
+    mirror_comm_device = mirror_device.initialize_device(mirror_device_string)
     iteration_number = 0
     
     parents = people.parent_group(num_init_parents, num_genes, init_voltage, filename)    # create parents from above constraints

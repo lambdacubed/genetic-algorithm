@@ -131,7 +131,7 @@ def initialize():
 
     data_acquisition_device = initialization_variables[8]
 
-    mirror_comm_device = initialization_variables[9]
+    mirror_device_string = initialization_variables[9]
 
     fom_num = int(initialization_variables[10])
 
@@ -147,7 +147,7 @@ def initialize():
     print('\tInitial voltage of starting parent: ', init_voltage, '\n')
     print('\tMutation percentage: ', mutation_percentage, '\n')
     print('\tData acquisition device: ', data_acquisition_device, '\n')
-    print('\tMirror communication device: ', mirror_comm_device, '\n')
+    print('\tMirror communication device: ', mirror_device_string, '\n')
     print('\tFigure of merit calculation number: ', fom_num, '\n')
     print('Would you like to change any of these values?\nEnter "y" or "n"')
     print('Note: the locations of all important variables are in the README.txt file')
@@ -199,7 +199,7 @@ def initialize():
             elif key_input == 'comm':   # determine what the user input
                 print('You are changing the mirror communication device')
                 print('The options are "PCI" or "USB"')
-                mirror_comm_device = change_value('string')   # change the variable's value
+                mirror_device_string = change_value('string')   # change the variable's value
                 if not change_others(): # determine if the user wants to change any other parameters
                     break
             elif key_input == 'fom':   # determine what the user input
@@ -236,7 +236,7 @@ def initialize():
                 break
             else:
                 print('You did not enter a valid command')
-    return num_genes, num_init_parents, num_init_children, init_voltage, filename, num_parents, num_children, mutation_percentage, data_acquisition_device, mirror_comm_device, fom_num
+    return num_genes, num_init_parents, num_init_children, init_voltage, filename, num_parents, num_children, mutation_percentage, data_acquisition_device, mirror_device_string, fom_num
 
 if __name__ == "__main__":
     print('You meant to run GeneticAlgorithm.py')
