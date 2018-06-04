@@ -20,6 +20,9 @@ import copy
 # This is needed for the NI DAQ
 import win32com.client  # Python ActiveX Client for calling and running LabVIEW
 
+# this is needed for the picoscope
+from picoscope import ps2000a
+
 # These libraries are needed for the Andor camera
 import ctypes   # this is used for being a wrapper to the c functions in the Andor dll
 import time     # this is used to make the program sleep for a little bit so the camera calibrates fully
