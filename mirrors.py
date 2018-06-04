@@ -7,35 +7,15 @@ ACTUATOR_ADDRESSES -- The addresses for the various actuators within the PCI boa
 Classes:
 actuator_array() -- This maps all of the neighboring actuator pairs (including diagonal actuators)
 and makes sure the voltage differences aren't too high
-
-Functions:
-array_conversion() -- maps the 37 genes to the correct actuators
-send_to_board() -- sends two arrays of voltages to the two PCI boards
-write_to_mirror() -- organizes genes and makes sure they will not break the mirror
 """
 
-# TODO get rid of labView
-
-#import pyvisa   # Use this when using the pyvisa code in send_to_board
-import win32com.client  # Use this when using the LabVIEW VI in send_to_board # Python ActiveX Client
-import numpy as np  # general useful python library
-
-import ctypes   # used when using python as a wrapper for c functions
 
 import matplotlib.pyplot as plt
 
 PCI_BOARDS = [['PXI4::5::INSTR'], ['PXI4::4::INSTR']]   # These are the addresses given in NI-MAX or on Device manager
 # the top row values are the addresses of actuators 0-18 and the bottom values are the addresses of the actuators 19-36
-ACTUATOR_ADDRESSES = [[0x34, 0x54, 0x28, 0x38, 0x08, 0x04, 0x24, 0x50, 0x58, 0x2C, 0x30, 0x1C, 0x10, 0x14, 0x0C, 0x00, 0x3C, 0x20, 0x5C],
-                      [0x24, 0x5C, 0x58, 0x54, 0x20, 0x10, 0x08, 0x1C, 0x14, 0x0C, 0x04, 0x00, 0x3C, 0x38, 0x34, 0x30, 0x2C, 0x28]]
 
-MAX_DIFF = 20 # maximum difference in voltage between neighboring actuators
-
-MAX_VOLTAGE = 100 # maximumm voltage an acuator can have
-
-VOLTAGE_MULTIPLIER = 2.65   # this is the constant used to multiply 
-
-class actuator_array(object):
+class XineticsDM_37square(object):
     """actuator_array is an object that represents deformable mirror actuators and checks
     whether the actuator voltage values break the mirror or not
 
@@ -45,11 +25,12 @@ class actuator_array(object):
         The array contains all of the pairs of actuators which neighbor each other (including diagonal)
     """
     def __init__(self):
-        # create an array that represents the deformable mirror indices
+        self.max_difference =  20 # maximum difference in voltage between neighboring actuators
+        self.max_voltage = 100 # maximumm voltage an acuator can have
+        self.min_voltage = 0
 
         # array that represents the indices of acuators on the deformable mirror
-        # Note: if you change to a different mirror, you will have to change this and the
-        #   first if statement to find the correct neighbors
+        # Note: if you change to a different mirror, you will have to make a new class with a different dm_array grid
         dm_array = [[-1,-1,28,27,26,-1,-1],
                     [-1,29,14,13,12,25,-1],
                     [30,15, 4, 3, 2,11,24],
@@ -188,130 +169,16 @@ class actuator_array(object):
         """
         valid_genes = True    # the child is good until proven bad
         for i in range(len(self.dm_actuator_neighbors)):      # Test every actuator value with its neighbors' values
-            valid_genes = valid_genes and (abs(genes[self.dm_actuator_neighbors[i][0]]-genes[self.dm_actuator_neighbors[i][1]]) <= MAX_DIFF)  # test voltage difference between neighboring actuators is less than 30
-        return valid_genes
-    
+            valid_genes = valid_genes and (abs(genes[self.dm_actuator_neighbors[i][0]]-genes[self.dm_actuator_neighbors[i][1]]) <= self.max_difference)  # test voltage difference between neighboring actuators is less than 30
+        
+        within_range = True # the genes are in the accepted voltage range unless proven to be out of range
+        for i in range(genes.size):  # for each gene
+            within_range = True and (genes[i] >= self.min_voltage) and (genes[i] <= self.max_voltage) # check that the voltages are between 0 and 250
 
-def array_conversion(genes):
-    """Maps genes to a different order so that indices in the genes array corresponds to the 
-    outward circular indexing convention given by this diagram.
-    [-1,-1,28,27,26,-1,-1]
-    [-1,29,14,13,12,25,-1]
-    [30,15, 4, 3, 2,11,24]
-    [31,16, 5, 0, 1,10,23]
-    [32,17, 6, 7, 8, 9,22]
-    [-1,33,18,19,20,21,-1]
-    [-1,-1,34,35,36,-1,-1]
-
-    Parameters
-    ----------
-    genes: genes, 1D numpy array
-        the genes or actuator voltages to be tested
-
-    Returns
-    -------
-    mapped_genes : mapped genes, 1D numpy array
-        The genes to be tested after being mapped so the index corresponds to the correct actuator
-    """
-    # Change the order of the genes so each index corresponds with the correct index on the deformable mirror
-    mapped_genes = [genes[17], genes[31], genes[32], genes[8], genes[18], genes[9], genes[1], genes[16], genes[0], genes[23],
-                    genes[6], genes[21], genes[20], genes[19], genes[33], genes[22], genes[7], genes[10], genes[5], genes[29],
-                    genes[27], genes[26], genes[28], genes[14], genes[35], genes[24], genes[36], genes[34], genes[11], genes[3],
-                    genes[2], genes[15], genes[4], genes[25], genes[30], genes[13], genes[12]]
-    return mapped_genes
-
-def send_to_board(voltages0, voltages1):
-    """Write the voltage values to the PCI boards
-
-    Parameters
-    ----------
-    voltages0 : voltages, 1D numpy array
-        The array of voltages being sent to board 0
-    voltages1 : voltages, 1D numpy array
-        The array of voltages being sent to board 1
-
-    """
-    #There are 3 different sets of code to write to the board: calling the LabVIEW VIs themselves, calling functions in a LabVIEW dll, and using pyVISA 
-    # This is the code for running the LabView VI which communicates with the deformable mirror 
-    
-    LabVIEW = win32com.client.Dispatch("Labview.Application")   # Start running Labview
-    pci0VI = LabVIEW.getvireference('C:\\Users\lambdacubed\Desktop\Mark\GA\LabView send volt to board\Volt_to_board_0.vi')    # path to the LabVIEW VI for the first board
-    pci0VI._FlagAsMethod("Call")    # Flag "Call" as the method to run the VI in this path
-    pci0VI.setcontrolvalue('error in (no error)', 0)   # set error in
-    pci0VI.setcontrolvalue('addresses', ACTUATOR_ADDRESSES[0])   # set addresses
-    pci0VI.setcontrolvalue('values to write', voltages0.tolist())   # set values to write
-    pci0VI.Call()   # Run the VI
-    result = pci0VI.getcontrolvalue('error out')    # retrieve error out
-    if (result[1] != 0):   # check whether there was an error
-        print('There was an error writing to board 0 at PXI4::5::INSTR')
-        print('Error: ', result)
-        print('Press anything and enter to exit...')
-        input()
-        exit()
-
-    pci1VI = LabVIEW.getvireference('C:\\Users\lambdacubed\Desktop\Mark\GA\LabView send volt to board\Volt_to_board_1.vi')    # path to the LabVIEW VI for the second board
-    pci1VI._FlagAsMethod("Call")    # Flag "Call" as the method to run the VI in this path
-    pci1VI.setcontrolvalue('error in (no error)', 0)   # set error in
-    pci1VI.setcontrolvalue('addresses', ACTUATOR_ADDRESSES[1])   # set addresses
-    pci1VI.setcontrolvalue('values to write', voltages1.tolist())   # set values to write
-    pci1VI.Call()   # Run the VI
-    result = pci1VI.getcontrolvalue('error out')    # retrieve error out
-    if (result[1] != 0):   # check whether there was an error
-        print('There was an error writing to board 1 at PXI4::4::INSTR')
-        print('Error: ', result)
-        print('Press anything and enter to exit...')
-        input()
-        exit()
-
-    return
-    
-    
-    # This is the code for using pyVISA, but it doesn't support PXI devices at the moment (5/18/2017)
-    """
-    rm = pyvisa.ResourceManager()   # instantiate an object to manage all devices connected to the computer
-    #print(rm.list_resources())  # show which things are connected to the computer
-    deformable_mirror = rm.open_resource(PCI_BOARDS[board_num])
-    lib = rm.visalib    # access the library for low-level "hardware" functions
-    session = lib.open_default_resource_manager() # open hardware level manager of devices attached to the computer
-    dm_session = lib.open(session[0], PCI_BOARDS[board_num]) # open access to the correct pci card
-    lib.map_address(dm_session[0], pyvisa.constants.VI_PXI_BAR0_SPACE, 0, 0xFF) # connect the pci memory addresses to the program's memory addresses
-    print(type(voltages[0]), 'voltages size')
-    for i in range(voltages.size):   # for each of the 37 voltages
-        lib.poke_8(dm_session[0], ACTUATOR_ADDRESSES[board_num][i], int(voltages[i]))   # write the voltage into the memory accessed by the pci card
-    lib.close(session[0])  # close the pci card
-    return
-    """
-
-def write_to_mirror(genes, dm_actuators):
-    """Checks whether the voltage values satisfy the requirements then sends them to the deformable mirror
-
-    Parameters
-    ----------
-    genes: genes, 1D numpy array
-        the genes or actuator voltages to be tested
-    dm_actuators : object from mirror_functions.py
-        This contains the list of neighbors to make sure the genes don't break the mirror.
-    """
-    within_range = True # the genes are in the accepted voltage range unless proven to be out of range
-    for i in range(genes.size):  # for each gene
-        within_range = True and (genes[i] >= 0) and (genes[i] <= MAX_VOLTAGE) # check that the voltages are between 0 and 250
-    if within_range:    # if all of the genes are within the correct range
-        if  dm_actuators.fits_mirror(genes): # if the genes don't break the mirror
-            applied_voltages = genes * VOLTAGE_MULTIPLIER # multiply each gene by some mirror constant to get the voltages sent to the mirror
-            voltage_array = array_conversion(applied_voltages) # change the mapping of the indices
-            send_to_board(genes[:19], genes[19:])
-        else:
-            print("Error: Tried writing the genes to the mirror, but they would've broken it")
-    else:
-        print('Error: Genes not in range (within the write_to_mirror function)')
-    return
-
-
-
+        return valid_genes and within_range
+   
 
 if __name__ == "__main__":
     print('You meant to run GeneticAlgorithm.py')
 
-    dm_actuators = actuator_array()
-    #genes = np.zeros(37)
-    #write_to_mirror(genes,dm_actuators)
+

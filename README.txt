@@ -5,7 +5,7 @@ python with some adjustments to get rid of any parts that were no longer used.
 
 
 HOW TO RUN
-1) Open Anaconda Prompt by pressing the windows key and typing "Anaconda Prompt"
+1) Open command prompt by pressing the windows key and typing "command prompt"
 2) Navigate to the folder which contains GeneticAlgorithm.py (by using the "cd" and "dir" commands)
 3) Type "python GeneticAlgorithm.py"
 

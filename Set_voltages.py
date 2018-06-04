@@ -6,7 +6,7 @@ send_file() -- sets voltages on the mirror from a file of actuator voltages
 send_genes() -- sets constant voltages on the mirror which are determined within the function
 test_actuators -- test the voltages for individual actuators
 """
-
+# todo make this work
 import numpy as np  # general useful python library
 
 import file_functions as file_f     # used to read from files

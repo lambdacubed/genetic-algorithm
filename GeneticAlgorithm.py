@@ -5,7 +5,7 @@ genetic_algorithm() -- Start, run, and end the genetic algorithm.
 """
 import people
 import msvcrt
-import mirror_functions as mirror_f
+import mirrors
 import file_functions as file_f
 import numpy as np
 import initialization_functions as initialization_f
@@ -15,6 +15,7 @@ import warnings
 import os
 import matplotlib.pyplot as plt
 import data_acquisition_functions as data_acq_f
+import mirror_communication_devices as mirror_device
 #import ic_capture
 
 ADF_FOLDER       = '\\saved_mirrors\\'     # directory for mirror actuator files
@@ -57,7 +58,7 @@ def genetic_algorithm():
     print('You are running the genetic algorithm')
     
     #This function sets all of the values of the number of parents, children, and mutation amount
-    num_genes, num_init_parents, num_init_children, init_voltage, filename, num_parents, num_children, mutation_percentage, data_acquisition_device, fom_num = initialization_f.initialize()
+    num_genes, num_init_parents, num_init_children, init_voltage, filename, num_parents, num_children, mutation_percentage, data_acquisition_device, mirror_comm_device, fom_num = initialization_f.initialize()
     """Note: To change the default values, go into genetic_algorithm.ini"""
     
     print('\nNOTE: LabView must be open in order to run the program\n')
@@ -77,17 +78,17 @@ def genetic_algorithm():
     
     print('Starting...')
     start_time = time.time()    # determine the time when the algorithm starts
-    dm_actuators = mirror_f.actuator_array() # initialize the class to determine if actuator voltages break the mirror or not
-    device = data_acq_f.data_acqusition(data_acquisition_device, fom_num)	# open and initialize the data acquisition device being used
-    
+    mirror = mirrors.XineticsDM_37square() # initialize the class to determine if actuator voltages break the mirror or not
+    daq_device = data_acq_f.data_acqusition(data_acquisition_device, fom_num)	# open and initialize the data acquisition device being used
+    mirror_comm_device = mirror_device.initialize_device(mirror_comm_device)
     iteration_number = 0
     
     parents = people.parent_group(num_init_parents, num_genes, init_voltage, filename)    # create parents from above constraints
-    children = people.child_group(num_init_children, parents, dm_actuators)       # create children from the given parents
-    children.mutate(mutation_percentage, dm_actuators)    # mutate the children
+    children = people.child_group(num_init_children, parents, mirror)       # create children from the given parents
+    children.mutate(mutation_percentage, mirror)    # mutate the children
     
     all_people = people.person_group(parents, children)     # combine all of the children and parents into a single container
-    all_people.test_and_sort_people(dm_actuators, device)   # measure the figures of merits and sort the people so the highest figure of merit is 0th indexed
+    all_people.test_and_sort_people(mirror, daq_device, mirror_comm_device)   # measure the figures of merits and sort the people so the highest figure of merit is 0th indexed
     
     best_person = all_people.people[0]  # the best person is the 0th indexed person in all_people
     print('best_person\n', best_person.figure_of_merit) # show the best person's genes and figure of merit
@@ -112,11 +113,11 @@ def genetic_algorithm():
     			num_parents = initialization_f.change_value('float', 0, num_children+1) # change the number of parents to what the user wants
     
     	parents = people.parent_group(num_parents,num_genes, None, None, all_people)   # create parents from the best performing children
-    	children = people.child_group(num_children, parents, dm_actuators)       # create children from the just created parents
-    	children.mutate(mutation_percentage, dm_actuators)    # mutate the children
+    	children = people.child_group(num_children, parents, mirror)       # create children from the just created parents
+    	children.mutate(mutation_percentage, mirror)    # mutate the children
     	
     	all_people = people.person_group(parents, children)     # combine all of the children and parents into a single container
-    	all_people.test_and_sort_people(dm_actuators)   # measure the figures of merits and sort the people so the highest figure of merit is 0th indexed
+    	all_people.test_and_sort_people(mirror, daq_device, mirror_comm_device)   # measure the figures of merits and sort the people so the highest figure of merit is 0th indexed
     	
     	new_best_person = all_people.people[0]  # the best person is the 0th indexed person in all_people
     
@@ -132,7 +133,7 @@ def genetic_algorithm():
     
     '''Close CCD and stop using c library'''
     # ic_capture.ccd_close()
-    device.shut_down()	# shut off the data acquisition device
+    daq_device.shut_down()	# shut off the data acquisition device
     
     print('What would you like to do with the best person?')    # once the loop has finished, the user decides what to do with the genes made
     while True:     # create an infinite loop
@@ -167,7 +168,7 @@ def genetic_algorithm():
 # If this function is being run explicitly, I want the genetic algorithm funciton to be run.
 # Otherwise, do not run the main function and so it only has the import functionality
 if __name__ == "__main__":
-    #genetic_algorithm()
+    genetic_algorithm()
     
     
     
