@@ -11,6 +11,11 @@ import copy
 
 import matplotlib.cm as cm
 
+def pico_FOM(dataA, fom_num):
+    print (np.absolute(dataA).mean())
+    # print (np.absolute(dataB).mean())
+    return np.absolute(dataA).mean()
+
 def rgb2gray(rgb):
 	'''Convert the 3-channel rgb image into grayscale
 	'''

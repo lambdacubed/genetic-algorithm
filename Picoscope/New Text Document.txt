@@ -1,0 +1,1 @@
+Initialization properties for the Picoscope (note 1: the lines must be double spaced and have an information line at the beginning. The first variable must appear on line 2)

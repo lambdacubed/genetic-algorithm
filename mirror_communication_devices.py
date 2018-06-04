@@ -7,7 +7,7 @@ import numpy as np  # general useful python library
 
 import ctypes   # used when using python as a wrapper for c functions
 
-DEVICES = ["PCI", "USB"]
+DEVICES = ("PCI", "USB")
 
 def initialize_device(device_string):
     if device_string == DEVICES[0]:     # if the device string is "PCI"

@@ -192,7 +192,7 @@ def initialize():
                     break
             elif key_input == 'daq':   # determine what the user input
                 print('You are changing the data acquisition device')
-                print('The options are "Andor", "NI_DAQ", or "IC"')
+                print('The options are "Andor", "NI_DAQ", "Picoscope" or "IC"')
                 data_acquisition_device = change_value('string')   # change the variable's value
                 if not change_others(): # determine if the user wants to change any other parameters
                     break

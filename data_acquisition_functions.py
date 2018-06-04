@@ -26,14 +26,14 @@ import time     # this is used to make the program sleep for a little bit so the
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
-DAQ_DEVICES = ["Andor", "NI_DAQ", "IC"]
+DAQ_DEVICES = ("Andor", "NI_DAQ", "IC", "Picoscope")
 
 # These are Andor error codes which are given in the sdk pdf file
 DRV_SUCCESS = 20002
 DRV_IDLE = 20073
 
 # Pixel formats for imaging source cameras as strings which organize pixels top down instead of down up
-PIXEL_FORMAT_TOP_DOWN = ['Y800', 'YGB0', 'YGB1', 'UYBY', 'Y16']
+PIXEL_FORMAT_TOP_DOWN = ('Y800', 'YGB0', 'YGB1', 'UYBY', 'Y16')
 
 class data_acqusition(object):
     """This object is used to initialize, acquire data from, and shut down various different hardware for data acquisition
@@ -50,6 +50,8 @@ class data_acqusition(object):
             self.__initialize_NI_DAQ(initialize_array)
         elif (device == DAQ_DEVICES[2]):    # if the device name is "IC"
             self.__initialize_IC(initialize_array)
+        elif (device == DAQ_DEVICES[3]):    # if the device name is "Picoscope"
+            self.__initialize_pico(initialize_array)
         else:
             print("Error: The device you entered into data acquisition wasn't valid")
             print("The possible devices are: ", DAQ_DEVICES)
@@ -364,6 +366,21 @@ class data_acqusition(object):
         # take an image because for some cameras, the first image doesn't work correctly and then the rest work
         self.acquire()
 
+
+    def __initialize_pico(self, initialize_array):
+        ps = ps2000a.PS2000a()
+
+        channelRange = ps.setChannel('A', 'DC', 2.0, 0.0, enabled=True,
+								        BWLimited=False)
+        channelRange = ps.setChannel('B', 'DC', 10.0, 0.0, enabled=True,
+								        BWLimited=False)
+        # print("Chosen channel range = %d" % channelRange)
+
+        ps.setSimpleTrigger('B', -4.0, 'Falling', delay=0, timeout_ms=100, enabled=True)
+
+        self.ps = ps
+
+
     def figure_of_merit(self):
         """Determine the figure of merit using the selected device
 
@@ -379,6 +396,8 @@ class data_acqusition(object):
             figure_of_merit_f.NI_DAQ_FOM(self.voltage, self.fom_num)
         elif (self.device == DAQ_DEVICES[2]):   # if the device name is "IC"
             figure_of_merit_f.ic_FOM(self.frameout, self.fom_num)
+        elif (self.device == DAQ_DEVICES[3]):   # if the device name is "Picoscope"
+            figure_of_merit_f.pico_FOM(self.data, self.fom_num)
 
     
     def acquire(self):
@@ -390,6 +409,8 @@ class data_acqusition(object):
             self.__acquire_NI_DAQ()
         elif (self.device == DAQ_DEVICES[2]):   # if the device name is "IC"
             self.__acquire_IC()
+        elif (self.device == DAQ_DEVICES[3]):   # if the device name is "Picoscope"
+            self.__acquire_pico()
     
     def __acquire_andor(self):
         """This function acquires an image from the andor camera and returns the image
@@ -476,7 +497,24 @@ class data_acqusition(object):
 
         self.frameout = frameout    # save the image
         
+    def __acquire_pico(self):
+        waveform_desired_duration = 1e-4
+        obs_duration = 3 * waveform_desired_duration
+        sampling_interval = obs_duration / 4096
     
+        (actualSamplingInterval, nSamples, maxSamples) = \
+    	    self.ps.setSamplingInterval(sampling_interval, obs_duration)
+    
+        # ps.runBlock()
+        # ps.waitReady()
+        # # print("Waiting for awg to settle.")
+        # time.sleep(0)
+        self.ps.runBlock()
+        self.ps.waitReady()
+        # print("Done waiting for trigger")
+        dataA = self.ps.getDataV('A', nSamples, returnOverflow=False)
+        # dataB = ps.getDataV('B', nSamples, returnOverflow=False)
+
     def shut_down(self):
         """Shut down the appropriate data acquisition hardware
         """
@@ -486,6 +524,8 @@ class data_acqusition(object):
             self.__shut_down_NI_DAQ()
         elif (self.device == DAQ_DEVICES[2]):     # if the device name is "IC"
             self.__shut_down_IC()
+        elif (self.device == DAQ_DEVICES[3]):     # if the device name is "Picoscope"
+            self.__shut_down_pico()
     
     def __shut_down_andor(self):
         """Shut down the Andor camera
@@ -506,76 +546,13 @@ class data_acqusition(object):
 
         self.ic_ic.close_library()   # stop accessing the IC dll
 
-#original IC image capture
-def ic():
-
-
-    ic_ic = IC_ImagingControl()
-    ic_ic.init_library()
-
-    cam_names = ic_ic.get_unique_device_names()
-    print("These are the available cameras:")
-    print(cam_names)
-    print("Please select an IC camera to use by inputting the index of the camera.")
-    print("The indices go from 0 to ", len(cam_names)-1)
-    while True:
-        index = int(input())
-        if ((index <= len(cam_names)-1) and (index >= 0)):
-            cam = ic_ic.get_device(cam_names[index])
-            break
-        else:
-            print("You didn't enter a correct index.")
-
-    cam.open()
-    cam.reset_properties()
-
-    # change camera properties
-    # print(cam.list_property_names())         # ['gain', 'exposure', 'hue', etc...]
-    cam.gain.auto = False                    # enable auto gain
-    
-    cam.exposure.value = 100
-
-    # change camera settings
-    formats = cam.list_video_formats()
-    # print formats
-    # print(formats)
-    cam.set_video_format(formats[0])        # use first available video format
-    cam.enable_continuous_mode(True)        # image in continuous mode
-    cam.start_live(show_display=False)       # start imaging
-    print(cam.is_triggerable())
-    cam.enable_trigger(False)                # camera will wait for trigger
-    if not cam.callback_registered:
-        cam.register_frame_ready_callback() # needed to wait for frame ready callback
-
-    cam.reset_frame_ready() 
-        
-    # cam.send_trigger()
-
-    cam.wait_til_frame_ready(1000)              # wait for frame ready due to trigger
-
-    data, width, height, depth = cam.get_image_data()
-    frame = np.ndarray(buffer=data,dtype=np.uint8,shape=(height, width, depth))
-    frameout = copy.deepcopy(frame).astype(float)
-    plt.imshow(frameout, cmap=plt.get_cmap('gray'))
-    plt.colorbar()
-    plt.show()
-
-    plt.imsave('figure_of_merit.png', frameout, cmap=cm.gray)
-    del frame
-    # print(frameout.max())
-
-    cam.stop_live() # stop capturing video from the camera
-    cam.close() # shut down the camera
-
-    ic_ic.close_library()   # stop accessing the IC dll
-    
-    return frameout
-
+    def __shut_down_pico(self):
+        self.ps.stop()
+        self.ps.close()
 
 
 if __name__ == "__main__":
 
-    # ic()
     device = data_acqusition("IC", 4)
     for i in range(1):
         device.figure_of_merit()

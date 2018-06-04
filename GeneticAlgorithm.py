@@ -72,7 +72,6 @@ def genetic_algorithm():
     while True: # run an infinite loop until a key is pressed
     	keyboard_input = input()  # get input from the user
     	if keyboard_input == '\r' or keyboard_input == '\n' or keyboard_input == 'r':    # if the key pressed was the enter key
-    		
     		break   # break out of the infinite loop
     
     

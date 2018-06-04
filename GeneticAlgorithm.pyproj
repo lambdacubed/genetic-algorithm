@@ -33,7 +33,10 @@
     <Compile Include="initialization_functions.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="mirror_functions.py">
+    <Compile Include="mirror_communication_devices.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="mirrors.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="people.py" />
