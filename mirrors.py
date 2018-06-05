@@ -101,11 +101,11 @@ class XineticsDM_37square(object):
             voltages : voltages, numpy array
                 This is an array of voltages sen to the mirror in the same form as voltage genes
             """
-            mirror = self.voltages_to_mirror(voltages)  # convert the voltages to a 2d array which looks like the mirror
+            mirror = self.voltages_to_mirror_array(voltages)  # convert the voltages to a 2d array which looks like the mirror
             plt.imshow(mirror)  # plot it
             plt.show()
         
-        def voltages_to_mirror(self, voltages):
+        def voltages_to_mirror_array(self, voltages):
             """Converts a numpy array of voltages to a 2d numpy array of which has the voltages at the correct indices of the DM
             
             Parameters
@@ -129,7 +129,7 @@ class XineticsDM_37square(object):
                                 mirror[row_i][col_j] = voltages[index]  # set the mirror voltage equal to the voltage array index
             return mirror
 
-        def mirror_to_voltages(self, mirror):
+        def mirror_to_voltages_array(self, mirror):
             """Converts a 2d numpy array of which has the voltages at the correct indices of the DM to a list of voltages
             
             Parameters

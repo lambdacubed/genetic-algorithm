@@ -6,6 +6,7 @@ plot_performance() -- plots the figures of merit of the given people
 
 import numpy as np  # general useful python library
 import matplotlib.pyplot as plt # plotting library
+from scipy.interpolate import interp2d
 
 def plot_performance(iteration_number, figures_of_merit):
     """plot the figures of merit for the current generation with the previous generations
@@ -39,3 +40,20 @@ def plot_performance(iteration_number, figures_of_merit):
     plt.draw()  # draw these things on the graph
     plt.pause(.001)     # pause the program so the plot can be updated
     return iteration_number, figures_of_merit
+
+
+def plot_mirror(genes, mirror, iteration_number):
+    if iteration_number == 0:
+        plt.figure(2)   # set the figure to be plotting to
+        plt.ion()   # enable interactive mode so we can continuously draw on the graph
+        plt.show()  # show the plot window
+        plt.title('Best person interpolated mirror')
+        plt.colorbar()
+    mirror_array = mirror.voltages_to_mirror_array(genes)
+    x_spacing = np.linspace(0,7,35)
+    y_spacing = np.linspace(0,7,35)
+    f = interp2d(x_spacing, y_spacing, mirror_array, kind='linear')
+    interp_mirror = f(x_spacing,y_spacing)
+    plt.imshow(interp_mirror,cmap=plt.get_cmap('gray'))
+    plt.draw()  # draw these things on the graph
+    plt.pause(.001)     # pause the program so the plot can be updated

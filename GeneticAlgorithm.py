@@ -125,6 +125,8 @@ def genetic_algorithm():
     		best_person = new_best_person   # if the new best person is better, they are the overall best person ever
     	print('best_person\n', best_person.figure_of_merit) # print out the best person ever made
     
+        plot_f.plot_mirror(best_person.genes, mirror, iteration_number)
+
     	figures_of_merit = np.concatenate((past_figures_of_merit, all_people.best_figures_of_merit(num_parents)), axis=1)   # concatenate the previous figure of merit matrix with the current figures of merit
     	iteration_number, past_figures_of_merit = plot_f.plot_performance(iteration_number, figures_of_merit)   # plot the progressions of figures of merit
     	

@@ -198,7 +198,7 @@ def initialize():
                     break
             elif key_input == 'comm':   # determine what the user input
                 print('You are changing the mirror communication device')
-                print('The options are "PCI" or "USB"')
+                print('The options are "PCI", "USB", or "Test"')
                 mirror_device_string = change_value('string')   # change the variable's value
                 if not change_others(): # determine if the user wants to change any other parameters
                     break

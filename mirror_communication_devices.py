@@ -5,13 +5,15 @@ import numpy as np  # general useful python library
 
 import ctypes   # used when using python as a wrapper for c functions
 
-DEVICES = ("PCI", "USB")
+DEVICES = ("PCI", "USB", "Test")
 
 def initialize_device(device_string):
     if device_string == DEVICES[0]:     # if the device string is "PCI"
         return PCI_DM_comm()
     elif device_string == DEVICES[1]:   # if the device string is "USB"
         return USB_DM_comm()
+    elif device_string == DEVICES[2]:   # if the device string is "Test"
+        return Test_comm()
     else:
         print("Error: The given mirror communication device was incorrect.")
         exit()
@@ -165,7 +167,14 @@ class USB_DM_comm(object):
         self.usbVI.setcontrolvalue('Actuator 1 to 37', voltages.tolist())   # set values to write
         self.usbVI.Call()   # Run the VI
         result = self.usbVI.getcontrolvalue('ERROR STATUS')    # retrieve error out
+
        
+class Test_comm(object):
+    def __init__(self):
+        return
+
+    def write_to_mirror(genes, mirror):
+        return
 
 if __name__ == "__main__":
     print('You meant to run GeneticAlgorithm.py')
