@@ -513,12 +513,14 @@ class Picoscope(daq_device):
         super().__init__(device_string, fom_num)     
         ps = ps2000a.PS2000a()
 
+        # Channel A - DC coupled, voltage: [-2,2]V , something, turn it on,  
         channelRange = ps.setChannel('A', 'DC', 2.0, 0.0, enabled=True,
 								        BWLimited=False)
+        
         channelRange = ps.setChannel('B', 'DC', 10.0, 0.0, enabled=True,
 								        BWLimited=False)
         # print("Chosen channel range = %d" % channelRange)
-
+        # set channel b trigger, DC OFFSET, 'Falling' trigger, 
         ps.setSimpleTrigger('B', -4.0, 'Falling', delay=0, timeout_ms=100, enabled=True)
 
         self.ps = ps
@@ -547,7 +549,7 @@ class Picoscope(daq_device):
         # ps.waitReady()
         # # print("Waiting for awg to settle.")
         # time.sleep(0)
-        self.ps.runBlock()
+        self.ps.runBlock() 
         self.ps.waitReady()
         # print("Done waiting for trigger")
         dataA = self.ps.getDataV('A', nSamples, returnOverflow=False)
