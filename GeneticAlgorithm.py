@@ -14,8 +14,8 @@ import plot_functions as plot_f
 import warnings
 import os
 import matplotlib.pyplot as plt
-import data_acquisition_functions as data_acq_f
-import mirror_communication_devices as mirror_device
+import data_acquisition_devices as daq_devices
+import mirror_communication_devices as mirror_devices
 #import ic_capture
 
 ADF_FOLDER       = '\\saved_mirrors\\'     # directory for mirror actuator files
@@ -58,7 +58,7 @@ def genetic_algorithm():
     print('You are running the genetic algorithm')
     
     #This function sets all of the values of the number of parents, children, and mutation amount
-    num_genes, num_init_parents, num_init_children, init_voltage, filename, num_parents, num_children, mutation_percentage, data_acquisition_device, mirror_device_string, fom_num = initialization_f.initialize()
+    num_genes, num_init_parents, num_init_children, init_voltage, filename, num_parents, num_children, mutation_percentage, data_acquisition_device, mirror_communication_device, fom_num = initialization_f.initialize()
     """Note: To change the default values, go into genetic_algorithm.ini"""
     
     print('\nNOTE: LabView must be open in order to run the program\n')
@@ -78,8 +78,8 @@ def genetic_algorithm():
     print('Starting...')
     start_time = time.time()    # determine the time when the algorithm starts
     mirror = mirrors.XineticsDM_37square() # initialize the class to determine if actuator voltages break the mirror or not
-    daq_device = data_acq_f.data_acqusition(data_acquisition_device, fom_num)	# open and initialize the data acquisition device being used
-    mirror_comm_device = mirror_device.initialize_device(mirror_device_string)
+    daq_device = daq_devices.initialize_daq_device(data_acquisition_device, fom_num)	# open and initialize the data acquisition device being used
+    mirror_comm_device = mirror_devices.initialize_comm_device(mirror_communication_device)
     iteration_number = 0
     
     parents = people.parent_group(num_init_parents, num_genes, init_voltage, filename)    # create parents from above constraints
@@ -97,40 +97,40 @@ def genetic_algorithm():
     print('Time to run: ', time.time() - start_time, ' seconds')    # print out the number of seconds since the algorithm started
     
     while True:     # run an infinite loop until user says to stop
-    	if msvcrt.kbhit():  # if the keyboard was hit
-    		keyboard_input = msvcrt.getwche()   # determine what key was pressed
-    		if keyboard_input == '\r' or keyboard_input == 's':  # if the enter key was pressed
-    			break   # get out of the while loop
-    		elif keyboard_input == 'm':   # if the m key was pressed
-    			print('\nThis is the current mutation percentage: ', mutation_percentage)
-    			mutation_percentage = initialization_f.change_value('float', 0, 100)    # change the mutation percentage to what the user wants
-    		elif keyboard_input == 'c':   # if the c key was pressed
-    			print('\nThis is the current number of children: ', num_children)   
-    			num_children = initialization_f.change_value('int', num_parents-1)   # change the number of children to what the user wants
-    		elif keyboard_input == 'p':   # if the p key was pressed
-    			print('\nThis is the current number of parents: ', num_parents)
-    			num_parents = initialization_f.change_value('float', 0, num_children+1) # change the number of parents to what the user wants
-    
-    	parents = people.parent_group(num_parents,num_genes, None, None, all_people)   # create parents from the best performing children
-    	children = people.child_group(num_children, parents, mirror)       # create children from the just created parents
-    	children.mutate(mutation_percentage, mirror)    # mutate the children
-    	
-    	all_people = people.person_group(parents, children)     # combine all of the children and parents into a single container
-    	all_people.test_and_sort_people(mirror, daq_device, mirror_comm_device)   # measure the figures of merits and sort the people so the highest figure of merit is 0th indexed
-    	
-    	new_best_person = all_people.people[0]  # the best person is the 0th indexed person in all_people
-    
-    
-    	if new_best_person.figure_of_merit > best_person.figure_of_merit:     # determine if the best person's figure of merit in this run is better than the current best person's figure of merit
-    		best_person = new_best_person   # if the new best person is better, they are the overall best person ever
-    	print('best_person\n', best_person.figure_of_merit) # print out the best person ever made
-    
+        if msvcrt.kbhit():  # if the keyboard was hit
+        	keyboard_input = msvcrt.getwche()   # determine what key was pressed
+        	if keyboard_input == '\r' or keyboard_input == 's':  # if the enter key was pressed
+        		break   # get out of the while loop
+        	elif keyboard_input == 'm':   # if the m key was pressed
+        		print('\nThis is the current mutation percentage: ', mutation_percentage)
+        		mutation_percentage = initialization_f.change_value('float', 0, 100)    # change the mutation percentage to what the user wants
+        	elif keyboard_input == 'c':   # if the c key was pressed
+        		print('\nThis is the current number of children: ', num_children)   
+        		num_children = initialization_f.change_value('int', num_parents-1)   # change the number of children to what the user wants
+        	elif keyboard_input == 'p':   # if the p key was pressed
+        		print('\nThis is the current number of parents: ', num_parents)
+        		num_parents = initialization_f.change_value('float', 0, num_children+1) # change the number of parents to what the user wants
+
+        parents = people.parent_group(num_parents,num_genes, None, None, all_people)   # create parents from the best performing children
+        children = people.child_group(num_children, parents, mirror)       # create children from the just created parents
+        children.mutate(mutation_percentage, mirror)    # mutate the children
+        
+        all_people = people.person_group(parents, children)     # combine all of the children and parents into a single container
+        all_people.test_and_sort_people(mirror, daq_device, mirror_comm_device)   # measure the figures of merits and sort the people so the highest figure of merit is 0th indexed
+        
+        new_best_person = all_people.people[0]  # the best person is the 0th indexed person in all_people
+
+
+        if new_best_person.figure_of_merit > best_person.figure_of_merit:     # determine if the best person's figure of merit in this run is better than the current best person's figure of merit
+        	best_person = new_best_person   # if the new best person is better, they are the overall best person ever
+        print('best_person\n', best_person.figure_of_merit) # print out the best person ever made
+
         plot_f.plot_mirror(best_person.genes, mirror, iteration_number)
 
-    	figures_of_merit = np.concatenate((past_figures_of_merit, all_people.best_figures_of_merit(num_parents)), axis=1)   # concatenate the previous figure of merit matrix with the current figures of merit
-    	iteration_number, past_figures_of_merit = plot_f.plot_performance(iteration_number, figures_of_merit)   # plot the progressions of figures of merit
-    	
-    	print('Time to run: ', time.time() - start_time, ' seconds')    # print out the number of seconds since the algorithm started
+        figures_of_merit = np.concatenate((past_figures_of_merit, all_people.best_figures_of_merit(num_parents)), axis=1)   # concatenate the previous figure of merit matrix with the current figures of merit
+        iteration_number, past_figures_of_merit = plot_f.plot_performance(iteration_number, figures_of_merit)   # plot the progressions of figures of merit
+        
+        print('Time to run: ', time.time() - start_time, ' seconds')    # print out the number of seconds since the algorithm started
     
     '''Close CCD and stop using c library'''
     # ic_capture.ccd_close()

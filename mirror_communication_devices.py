@@ -7,7 +7,7 @@ import ctypes   # used when using python as a wrapper for c functions
 
 DEVICES = ("PCI", "USB", "Test")
 
-def initialize_device(device_string):
+def initialize_comm_device(device_string):
     if device_string == DEVICES[0]:     # if the device string is "PCI"
         return PCI_DM_comm()
     elif device_string == DEVICES[1]:   # if the device string is "USB"
