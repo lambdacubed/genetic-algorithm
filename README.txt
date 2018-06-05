@@ -33,12 +33,12 @@ Simply run Set_voltages.py
 HOW TO SET UP A NEW DATA ACQUISITION DEVICE
 1) Create a folder for your new device 
 2) Within that folder, create a properties.ini file formatted the same as the other .ini files.
-3) Adjust the data_acquisition_functions.py file to include an initialize, acquire, figure of merit, and shut_down function for your device.
-4) Include your device as an available option in the genetic_algorithm.ini file
+3) Adjust the data_acquisition_devices.py file to include an class for your device with an __init__, acquire, figure of merit, and shut_down function.
+4) Include your device as an available option in the genetic_algorithm.ini file, in DAQ_DEVICES, and in initialize_daq_device() in data_acquisition_devices.py
 
 Example: If you want to call your device "device1", create a folder named "device1". Within that folder, create
-a file named "device1 properties.ini". Adjust data_acquisition_functions.py to have options for 
-"elif (self.device == "device1"):" in its public functions (public functions do not have "__" in front of their name).
+a file named "device1 properties.ini". Adjust data_acquisition_devices.py to have an option for 
+"elif (self.device == DAQ_DEVICES[{insert index of "device1" in DAQ_DEVICES}]):" and have it return the device1 class.
 Then, go into genetic_algorithm.ini and let "device1" be an option.
 Note: the device name "device1" or whatever you choose, cannot have any space in it
 
