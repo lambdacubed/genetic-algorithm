@@ -26,6 +26,10 @@ HOW TO TEST A DATA ACQUISITION DEVICE
 Simply run data_acquisition_functions.py
 
 
+HOW TO SEND VOLTAGES TO THE MIRROR OR TEST INDIVIDUAL ACTUATORS
+Simply run Set_voltages.py
+
+
 HOW TO SET UP A NEW DATA ACQUISITION DEVICE
 1) Create a folder for your new device 
 2) Within that folder, create a properties.ini file formatted the same as the other .ini files.

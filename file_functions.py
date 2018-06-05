@@ -54,7 +54,7 @@ def read_adf(filename, num_genes):
     """
     new_gene_array = np.empty(0, 'float')   # initialize array to hold the read genes
     directory_path = os.path.dirname(os.path.abspath(__file__)) # get the current directory's path
-    new_dir_path = directory_path + MIRROR_VOLTAGES_FOLDER  # add the mirror voltages folder for saving to the path
+    new_dir_path = directory_path + MIRROR_VOLTAGES_FOLDER  # add the mirror voltages folder to the path
     with open(new_dir_path + filename, 'r') as filein:    # open the file to be read from
         tsvreader = csv.reader(filein, delimiter = '\t')    # make the values tab separated
         for row in tsvreader:   # for each row in the file

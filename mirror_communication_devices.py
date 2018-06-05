@@ -1,6 +1,4 @@
 
-# TODO get rid of labView
-
 #import pyvisa   # Use this when using the pyvisa code in send_to_board pci
 import win32com.client  # Use this when using the LabVIEW VI in send_to_board # Python ActiveX Client
 import numpy as np  # general useful python library
