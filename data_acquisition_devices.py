@@ -41,7 +41,7 @@ PIXEL_FORMAT_TOP_DOWN = ('Y800', 'YGB0', 'YGB1', 'UYBY', 'Y16')
 
 def initialize_daq_device(device_string, fom_num):
     if (device_string == DAQ_DEVICES[0]):  # if the device name is "Andor"
-        return Andordevice_string, fom_num()
+        return Andor(device_string, fom_num)
     elif (device_string == DAQ_DEVICES[1]):    # if the device name is "NI_DAQ"
         return NI_DAQ(device_string, fom_num)
     elif (device_string == DAQ_DEVICES[2]):    # if the device name is "IC"
@@ -322,7 +322,7 @@ class NI_DAQ(daq_device):
         voltage = self.pci0VI.getcontrolvalue('voltage')    # retrieve error out
         error = self.pci0VI.getcontrolvalue('error out')    # retrieve error out
         if (error[1] != 0):   # check whether there was an error
-            print('There was an error writing to board 0 at PXI4::5::INSTR')
+            print('There was an error getting data from NI_DAQ')
             print('Error: ', error)
             print('Press anything and enter to exit...')
             input()
@@ -586,8 +586,8 @@ if __name__ == "__main__":
     print("Which device would you like to test?\nThe options are the following: \n", DAQ_DEVICES)
     print("Enter an index from 0 to ", len(DAQ_DEVICES)-1)
     while True:
-        index = input()
-        if 0 <= index < len(DAQ_DEVICES):
+        index = int(input())
+        if 0 <= index <= len(DAQ_DEVICES)-1:
             break
         else:
             print("You didn't enter a correct index. Try again.")

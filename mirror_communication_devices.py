@@ -71,7 +71,6 @@ class PCI_DM_comm(object):
         """
         #There are 3 different sets of code to write to the board: calling the LabVIEW VIs themselves, calling functions in a LabVIEW dll, and using pyVISA 
         # This is the code for running the LabView VI which communicates with the deformable mirror 
-    
         self.pci5VI.setcontrolvalue('values to write', voltages0.tolist())   # set values to write
         self.pci5VI.Call()   # Run the VI
         result = self.pci5VI.getcontrolvalue('error out')    # retrieve error out
@@ -123,10 +122,10 @@ class PCI_DM_comm(object):
             The genes to be tested after being mapped so the index corresponds to the correct actuator
         """
         # Change the order of the genes so each index corresponds with the correct index on the deformable mirror
-        mapped_genes = [genes[17], genes[31], genes[32], genes[8], genes[18], genes[9], genes[1], genes[16], genes[0], genes[23],
+        mapped_genes = np.array([genes[17], genes[31], genes[32], genes[8], genes[18], genes[9], genes[1], genes[16], genes[0], genes[23],
                         genes[6], genes[21], genes[20], genes[19], genes[33], genes[22], genes[7], genes[10], genes[5], genes[29],
                         genes[27], genes[26], genes[28], genes[14], genes[35], genes[24], genes[36], genes[34], genes[11], genes[3],
-                        genes[2], genes[15], genes[4], genes[25], genes[30], genes[13], genes[12]]
+                        genes[2], genes[15], genes[4], genes[25], genes[30], genes[13], genes[12]])
         return mapped_genes
 
 

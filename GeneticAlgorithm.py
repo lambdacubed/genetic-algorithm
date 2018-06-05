@@ -153,9 +153,9 @@ def genetic_algorithm():
                 break   # break out of the while loop
         elif saving_option == 'graph':  # if the user wants to save the graph
             directory_path = os.path.dirname(os.path.abspath(__file__)) # get the current directory's path
-            print("\tThe default directory is " + + directory_path + FOM_GRAPH_FOLDER)
+            print("\tThe default directory is " + directory_path + FOM_GRAPH_FOLDER)
             directory_path = save_different_directory(directory_path + FOM_GRAPH_FOLDER)
-            print("Enter the file name you want to be saved (for test.csv, input test):\nNote: this will overwrite a file with the same name")
+            print("Enter the file name you want to be saved (for test.csv, input test):\nNote: This saves a .csv of graph's values and a pdf of the python figure\nAlso, this will overwrite a file with the same name")
             filename = input()  # get user input from for what filename they want
             file_f.write_figures_of_merit(figures_of_merit, directory_path + filename)   # write the figures of merit to a comma separated value file
             plt.savefig( directory_path +'%s.pdf' %  filename, dpi = 300, bbox_inches = 'tight')

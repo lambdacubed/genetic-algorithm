@@ -32,6 +32,7 @@ def ic_FOM(frameout, fom_num):
     if fom_num == "test":   # if the daq device is being tested
         plt.imshow(frameout,cmap=plt.get_cmap('gray'))
         plt.colorbar()
+        plt.show()
         #plt.savefig('//IC//test.png')
         return
     
@@ -112,6 +113,7 @@ def Andor_FOM(image, fom_num):
     if fom_num == "test":   # if the daq device is being tested
         plt.imshow(image,cmap=plt.get_cmap('gray')) # plot the image
         plt.colorbar()
+        plt.show()
         #plt.savefig('//Andor//test.png')
         return
     

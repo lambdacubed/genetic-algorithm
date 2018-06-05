@@ -69,7 +69,6 @@ def test_actuators(mirror_comm_device):
                 break
 
         test_voltages = np.zeros(37) + 0    # initialize the array of test voltages to 0
-        print(type(test_voltages))
         test_voltages[actuator_index] = voltage
         print("Voltages are: ", test_voltages)
         if mirror.fits_mirror(test_voltages):
