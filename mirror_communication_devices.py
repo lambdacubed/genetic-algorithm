@@ -2,6 +2,7 @@
 #import pyvisa   # Use this when using the pyvisa code in send_to_board pci
 import win32com.client  # Use this when using the LabVIEW VI in send_to_board # Python ActiveX Client
 import numpy as np  # general useful python library
+import os
 
 import ctypes   # used when using python as a wrapper for c functions
 
@@ -39,7 +40,7 @@ class PCI_DM_comm(object):
         self.pci4VI.setcontrolvalue('addresses', self.ACTUATOR_ADDRESSES[1])   # set addresses
 
 
-    def write_to_mirror(genes, mirror):
+    def write_to_mirror(self, genes, mirror):
         """Checks whether the voltage values satisfy the requirements then sends them to the deformable mirror
 
         Parameters
@@ -52,12 +53,12 @@ class PCI_DM_comm(object):
         if  mirror.fits_mirror(genes): # if the genes don't break the mirror
             applied_voltages = genes * self.VOLTAGE_MULTIPLIER # multiply each gene by some mirror constant to get the voltages sent to the mirror
             voltage_array = self.__array_conversion(applied_voltages) # change the mapping of the indices
-            self.__send_to_board(votlage_array[:19], voltage_array[19:])
+            self.__send_to_board(voltage_array[:19], voltage_array[19:])
         else:
             print("Error: Tried writing the genes to the mirror, but they would've broken it")
         return
 
-    def __send_to_board(voltages0, voltages1):
+    def __send_to_board(self, voltages0, voltages1):
         """Write the voltage values to the PCI boards
 
         Parameters
@@ -108,7 +109,7 @@ class PCI_DM_comm(object):
         return
         """
 
-    def __array_conversion(genes):
+    def __array_conversion(self, genes):
         """Maps genes to a different order so that indices in the genes array corresponds to the correct index of the mirror
 
         Parameters
@@ -139,7 +140,7 @@ class USB_DM_comm(object):
         self.usbVI = LabVIEW.getvireference(directory_path + '\\Volt_to_mirror_2.vi')    # path to the LabVIEW VI for the first board
         self.usbVI._FlagAsMethod("Call")    # Flag "Call" as the method to run the VI in this path
 
-    def write_to_mirror(genes, mirror):
+    def write_to_mirror(self, genes, mirror):
         """Checks whether the voltage values satisfy the requirements then sends them to the deformable mirror
         Parameters
         ----------
@@ -154,7 +155,7 @@ class USB_DM_comm(object):
         else:
             print("Error: Tried writing the genes to the mirror, but they would've broken it")
 
-    def __send_to_board(voltages):
+    def __send_to_board(self, voltages):
         """Write the voltage values to the PCI boards
         Parameters
         ----------
@@ -173,7 +174,7 @@ class Test_comm(object):
     def __init__(self):
         return
 
-    def write_to_mirror(genes, mirror):
+    def write_to_mirror(self, genes, mirror):
         return
 
 if __name__ == "__main__":

@@ -176,7 +176,7 @@ if __name__ == "__main__":
     
     #dm = mirror_f.actuator_array()
     #print(len(dm.dm_actuator_neighbors))
-    #help("Set_voltages)
+    # help("mirrors")
 
     
     #device = data_acq_f.data_acqusition("Andor")	# open and initialize the data acquisition device being used

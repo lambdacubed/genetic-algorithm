@@ -22,7 +22,10 @@ def send_file(mirror_comm_device):
     mirror = mirrors.XineticsDM_37square()    # initialize the information about the mirror
     print('You are setting voltages for deformable mirror')
     print('Actuator voltages are: ', saved_voltages)   # show the operator what voltages they are sending to the mirror
-    mirror_comm_device.write_to_mirror(saved_voltages, mirror) # send the voltages to the mirror
+    if mirror.fits_mirror(saved_voltages):
+        mirror_comm_device.write_to_mirror(saved_voltages, mirror) # send the voltages to the mirror
+    else:
+        print("Voltages would've broken mirror.")
 
 
 def send_genes(mirror_comm_device):
@@ -36,7 +39,10 @@ def send_genes(mirror_comm_device):
     test_voltages = np.zeros(num_genes) + constant_voltage   # create array of 37 constant voltages
     print('This is the genes:\n',test_voltages)    # show the operator what the actuator voltages are
     print('You are setting voltages for deformable mirror')
-    mirror_comm_device.write_to_mirror(test_voltages, mirror)  # write the voltages to the mirror
+    if mirror.fits_mirror(test_voltages):
+        mirror_comm_device.write_to_mirror(test_voltages, mirror)  # write the voltages to the mirror
+    else:
+        print("Voltages would've broken mirror.")
 
 
 def test_actuators(mirror_comm_device):
@@ -62,18 +68,25 @@ def test_actuators(mirror_comm_device):
             if good == 'y': # if the input was good
                 break
 
-        test_voltages = np.zeros(37)    # initialize the array of test voltages to 0
+        test_voltages = np.zeros(37) + 0    # initialize the array of test voltages to 0
+        print(type(test_voltages))
         test_voltages[actuator_index] = voltage
         print("Voltages are: ", test_voltages)
-        mirror_comm_device.write_to_mirror(test_voltages, mirror)   # write the set of voltages to the mirror
+        if mirror.fits_mirror(test_voltages):
+            mirror_comm_device.write_to_mirror(test_voltages, mirror)   # write the set of voltages to the mirror
+        else:
+            print("Voltages would've broken mirror.")
         print("Finished testing? (Enter 'y' or 'n')")
         done = input()  # determine if the user is done
         if (done == 'y'):
-        	print("\nSending all 0's to the mirror")
-        	test_voltages = np.zeros(37)    # set the actuator voltages back to 0    
-        	print("Voltages are: ", test_voltages)
-        	mirror_comm_device.write_to_mirror(test_voltages, mirror)   # write the set of voltages to the mirror
-        	break
+            print("\nSending all 0's to the mirror")
+            test_voltages = np.zeros(37)    # set the actuator voltages back to 0    
+            print("Voltages are: ", test_voltages)
+            if mirror.fits_mirror(test_voltages):
+                mirror_comm_device.write_to_mirror(test_voltages, mirror)   # write the set of voltages to the mirror
+            else:
+                print("Voltages would've broken mirror.")
+            break
     
     
     
@@ -84,9 +97,11 @@ if __name__ == "__main__":
     while True:
         mirror_device_string = input()
         if mirror_device_string == "PCI":
-            mirror_comm_device = mirror_devices.initialize_device(mirror_device_string)
+            mirror_comm_device = mirror_devices.initialize_comm_device(mirror_device_string)
+            break
         elif mirror_device_string == "USB":
-            mirror_comm_device = mirror_devices.initialize_device(mirror_device_string)
+            mirror_comm_device = mirror_devices.initialize_comm_device(mirror_device_string)
+            break
         else:
             print("You didn't enter a valid input. Try again.")
 

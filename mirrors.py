@@ -9,7 +9,7 @@ actuator_array() -- This maps all of the neighboring actuator pairs (including d
 and makes sure the voltage differences aren't too high
 """
 
-
+import numpy as np
 import matplotlib.pyplot as plt
 
 PCI_BOARDS = [['PXI4::5::INSTR'], ['PXI4::4::INSTR']]   # These are the addresses given in NI-MAX or on Device manager
@@ -25,7 +25,7 @@ class XineticsDM_37square(object):
         The array contains all of the pairs of actuators which neighbor each other (including diagonal)
     """
     def __init__(self):
-        self.max_difference =  20 # maximum difference in voltage between neighboring actuators
+        self.max_difference =  30 # maximum difference in voltage between neighboring actuators
         self.max_voltage = 100 # maximumm voltage an acuator can have
         self.min_voltage = 0
 
@@ -40,7 +40,7 @@ class XineticsDM_37square(object):
                     [-1,-1,34,35,36,-1,-1]]
 
         self.dm_array = dm_array
-
+        self.numpy_dm_array = np.array(dm_array)
         dm_actuator_neighbors = []      # initialize the empty list of neighboring actuators
 
         # The nested for loops go through the entire array and determine which actuators 
@@ -93,65 +93,66 @@ class XineticsDM_37square(object):
                         [27,28],[28,29],[29,30],[30,31],[31,32],[32,33],[33,34],[34,35],[35,36]]
         """
 
-        def plot_voltages(self, voltages):
-            """Plots what a set of voltages look like on the mirror
-            
-            Parameters
-            ----------
-            voltages : voltages, numpy array
-                This is an array of voltages sen to the mirror in the same form as voltage genes
-            """
-            mirror = self.voltages_to_mirror_array(voltages)  # convert the voltages to a 2d array which looks like the mirror
-            plt.imshow(mirror)  # plot it
-            plt.show()
+    def plot_voltages(self, voltages):
+        """Plots what a set of voltages look like on the mirror
         
-        def voltages_to_mirror_array(self, voltages):
-            """Converts a numpy array of voltages to a 2d numpy array of which has the voltages at the correct indices of the DM
-            
-            Parameters
-            ----------
-            voltages : voltages, numpy array
-                This is an array of voltages sen to the mirror in the same form as voltage genes
-
-            Returns
-            -------
-            mirror : mirror, 2d numpy array
-                This is the set of voltages applied to the mirror in a 2d numpy array which looks like the DM
-            """
-
-            mirror = np.zeros_like(self.dm_array, dtype='float')    # initialize a 2d numpy array which looks like self.dm_array
-            # loop through each of the voltage indices and each of the mirror indices
-            for index in range(voltages.size):
-                for row_i in range(len(self.dm_array)):
-                    for col_j in range(len(self.dm_array[row_i])):   
-                        if dm_array[row_i][col_j] != -1:     # make sure the index at (i,j) is represents a real actuator
-                            if (self.dm_array[row_i][col_j] == index):  # if the mirror index is the same as the voltage index
-                                mirror[row_i][col_j] = voltages[index]  # set the mirror voltage equal to the voltage array index
-            return mirror
-
-        def mirror_to_voltages_array(self, mirror):
-            """Converts a 2d numpy array of which has the voltages at the correct indices of the DM to a list of voltages
-            
-            Parameters
-            ----------
-            mirror : mirror, 2d numpy array
-                This is the set of voltages applied to the mirror in a 2d numpy array which looks like the DM
-
-            Returns
-            -------
-            voltages : voltages, numpy array
-                This is an array of voltages sen to the mirror in the same form as voltage genes
-            """
-            voltages = np.empty(37, 'float', 'C')   # initialize voltage array
-            # loop through each of the voltage indices and each of the mirror indices
-            for index in range(voltages.size):
-                for row_i in range(len(self.dm_array)):
-                    for col_j in range(len(self.dm_array[row_i])):   
-                        if dm_array[row_i][col_j] != -1:     # make sure the index at (i,j) is represents a real actuator
-                            if (self.dm_array[row_i][col_j] == index):  # if the mirror index is the same as the voltage index
-                                voltages[index] = mirror[row_i][col_j]  # set the voltage value of the mirror to the voltage array
-            return voltages
+        Parameters
+        ----------
+        voltages : voltages, numpy array
+            This is an array of voltages sen to the mirror in the same form as voltage genes
+        """
+        mirror = self.voltages_to_mirror_array(voltages)  # convert the voltages to a 2d array which looks like the mirror
+        plt.imshow(mirror)  # plot it
+        plt.show()
+    
+    def voltages_to_mirror_array(self, voltages):
+        """Converts a numpy array of voltages to a 2d numpy array of which has the voltages at the correct indices of the DM
         
+        Parameters
+        ----------
+        voltages : voltages, numpy array
+            This is an array of voltages sen to the mirror in the same form as voltage genes
+
+        Returns
+        -------
+        mirror : mirror, 2d numpy array
+            This is the set of voltages applied to the mirror in a 2d numpy array which looks like the DM
+        """
+
+        mirror = np.zeros_like(self.dm_array, dtype='float')    # initialize a 2d numpy array which looks like self.dm_array
+        mirror[:] = np.nan
+        # loop through each of the voltage indices and each of the mirror indices
+        for index in range(voltages.size):
+            for row_i in range(len(self.dm_array)):
+                for col_j in range(len(self.dm_array[row_i])):   
+                    if self.dm_array[row_i][col_j] != -1:     # make sure the index at (i,j) is represents a real actuator
+                        if (self.dm_array[row_i][col_j] == index):  # if the mirror index is the same as the voltage index
+                            mirror[row_i][col_j] = voltages[index]  # set the mirror voltage equal to the voltage array index
+        return mirror
+
+    def mirror_to_voltages_array(self, mirror):
+        """Converts a 2d numpy array of which has the voltages at the correct indices of the DM to a list of voltages
+        
+        Parameters
+        ----------
+        mirror : mirror, 2d numpy array
+            This is the set of voltages applied to the mirror in a 2d numpy array which looks like the DM
+
+        Returns
+        -------
+        voltages : voltages, numpy array
+            This is an array of voltages sen to the mirror in the same form as voltage genes
+        """
+        voltages = np.empty(37, 'float', 'C')   # initialize voltage array
+        # loop through each of the voltage indices and each of the mirror indices
+        for index in range(voltages.size):
+            for row_i in range(len(self.dm_array)):
+                for col_j in range(len(self.dm_array[row_i])):   
+                    if self.dm_array[row_i][col_j] != -1:     # make sure the index at (i,j) is represents a real actuator
+                        if (self.dm_array[row_i][col_j] == index):  # if the mirror index is the same as the voltage index
+                            voltages[index] = mirror[row_i][col_j]  # set the voltage value of the mirror to the voltage array
+        return voltages
+    
 
 
     def fits_mirror(self,genes):

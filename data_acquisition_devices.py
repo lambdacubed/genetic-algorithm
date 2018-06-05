@@ -55,6 +55,19 @@ def initialize_daq_device(device_string, fom_num):
         print("The possible devices are: ", DAQ_DEVICES)
         exit()
 
+
+
+class daq_device(object):
+    """This object is used to initialize, acquire data from, and shut down various different hardware for data acquisition
+    """
+    def __init__(self, device, fom_num):
+        self.device = device    # save which acquisition device is being used
+        self.initialize_array = file_f.read_initialization_variables("\\"+ self.device + "\\" + self.device + " properties.ini") # read in the initialization information from the file at device/device properites.ini
+        self.fom_num = fom_num
+        
+
+
+
 class Andor(daq_device):
 
     def __init__(self, device_string, fom_num):		
@@ -558,20 +571,10 @@ class Test(object):
         fom_num: figure of merit number, int
             This determines which calculation to use when calculating the figure of merit
         """
-        return np.randint(100)
+        return np.random.randn()
 
     def shut_down(self):
         return
-
-
-class daq_device(object):
-    """This object is used to initialize, acquire data from, and shut down various different hardware for data acquisition
-    """
-    def __init__(self, device, fom_num):
-        self.device = device    # save which acquisition device is being used
-        self.initialize_array = file_f.read_initialization_variables("\\"+ self.device + "\\" + self.device + " properties.ini") # read in the initialization information from the file at device/device properites.ini
-        self.fom_num = fom_num
-        
          
 
 if __name__ == "__main__":

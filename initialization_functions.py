@@ -121,8 +121,15 @@ def initialize():
     num_init_children = int(initialization_variables[2])     # number of starting children
     
     """Note: You can either have an initial voltage or a filename to read from, not both"""
-    init_voltage = int(initialization_variables[3])          # initial voltage on mirror actuators
-    filename = str(initialization_variables[4])             # name of file to read from
+    if initialization_variables[3] == "None":
+        init_voltage = None
+    else:
+        init_voltage = int(initialization_variables[3])          # initial voltage on mirror actuators
+
+    if initialization_variables[4] == "None":
+        filename = None
+    else:
+        filename = str(initialization_variables[4])             # name of file to read from
     '''Note: Also, it can only read the file if it is in saved_mirrors'''
 
     num_parents = int(initialization_variables[5])            # number of parents in loop iterations
