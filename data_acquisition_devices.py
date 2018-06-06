@@ -509,19 +509,48 @@ class IC(daq_device):
 
 
 class Picoscope(daq_device):
-    def __init__(self, device_string, fom_num):		
-        super().__init__(device_string, fom_num)     
-        ps = ps2000a.PS2000a()
+    def __init__(self, device_string, fom_num):	
+        super().__init__(device_string, fom_num)
+        self.channels = ('A', 'B')
+
+        ps = ps2000a.PS2000a()  # create an instance of the picoscope 2000a class
+
+        channelA_coupling = self.initialize_array[0]
+        channelA_voltage_range = float(self.initialize_array[1])
+        channelA_offset = float(self.initialize_array[2])   # The VOffset, is an offset that the scope will ADD to your signal.
+        channelA_enabled = self.initialize_array[3] == "True"
+        channelA_bandwidth_limited = self.initialize_array[4] == "True"
+
+        channelB_coupling = self.initialize_array[5]
+        channelB_voltage_range = float(self.initialize_array[6])
+        channelB_offset = float(self.initialize_array[7])
+        channelB_enabled = self.initialize_array[8] == "True"
+        channelB_bandwidth_limited = self.initialize_array[9] == "True"
 
         # Channel A - DC coupled, voltage: [-2,2]V , something, turn it on,  
-        channelRange = ps.setChannel('A', 'DC', 2.0, 0.0, enabled=True,
-								        BWLimited=False)
+        channelARange = ps.setChannel(self.channels[0], channelA_coupling, channelA_voltage_range, channelA_offset, channelA_enabled, channelA_bandwidth_limited, probeAttenuation=1.0)
+        print("Channel A range is ", channelARange)
+
+        channelBRange = ps.setChannel(self.channels[1], channelB_coupling, channelB_voltage_range, channelB_offset, channelB_enabled, channelB_bandwidth_limited, probeAttenuation=1.0)
+        print("Channel B range is ", channelBRange)
         
-        channelRange = ps.setChannel('B', 'DC', 10.0, 0.0, enabled=True,
-								        BWLimited=False)
-        # print("Chosen channel range = %d" % channelRange)
-        # set channel b trigger, DC OFFSET, 'Falling' trigger, 
-        ps.setSimpleTrigger('B', -4.0, 'Falling', delay=0, timeout_ms=100, enabled=True)
+        trigger_channel = self.initialize_array[10]
+        trigger_threshold = float(self.initialize_array[11])
+        trigger_direction = self.initialize_array[12]
+        trigger_delay = int(self.initialize_array[13])
+        trigger_timeout = int(self.initialize_array[14])
+        trigger_enabled = self.initialize_array[15] == "True"
+        
+        ps.setSimpleTrigger(trigger_channel, trigger_threshold, trigger_direction, trigger_delay, trigger_timeout, trigger_enabled)
+
+        self.signal_channel = self.initialize_array[16]
+        acquisition_window_duration = float(self.initialize_array[17])
+
+        obs_duration = 3 * acquisition_window_duration
+        sampling_interval = obs_duration / 4096
+        (actualSamplingInterval, self.nSamples, maxSamples) = ps.setSamplingInterval(sampling_interval, obs_duration)
+
+        print("Sampling interval:", actualSamplingInterval, "\nNumber of samples:", nSamples)
 
         self.ps = ps
 
@@ -538,23 +567,12 @@ class Picoscope(daq_device):
 
     
     def __acquire(self):
-        waveform_desired_duration = 1e-4
-        obs_duration = 3 * waveform_desired_duration
-        sampling_interval = obs_duration / 4096
-    
-        (actualSamplingInterval, nSamples, maxSamples) = \
-    	    self.ps.setSamplingInterval(sampling_interval, obs_duration)
-    
-        # ps.runBlock()
-        # ps.waitReady()
-        # # print("Waiting for awg to settle.")
-        # time.sleep(0)
+        
         self.ps.runBlock() 
         self.ps.waitReady()
         # print("Done waiting for trigger")
-        dataA = self.ps.getDataV('A', nSamples, returnOverflow=False)
+        self.data = self.ps.getDataV(self.signal_channel, self.nSamples, returnOverflow=False)
         # dataB = ps.getDataV('B', nSamples, returnOverflow=False)
-            
 
     def shut_down(self):
         self.ps.stop()

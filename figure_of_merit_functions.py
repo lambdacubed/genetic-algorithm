@@ -11,11 +11,13 @@ import copy
 
 import matplotlib.cm as cm
 
-def pico_FOM(dataA, fom_num):
+def pico_FOM(data, fom_num):
     if fom_num == "test":   # if the daq device is being tested
-        print (np.absolute(dataA).mean())
+        plt.plot(data)
+        plt.xlabel("Sample number")
+        plt.title("Signal")
         return
-    return np.absolute(dataA).mean()
+    return np.absolute(data).mean()
     
 
 def rgb2gray(rgb):
