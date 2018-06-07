@@ -43,20 +43,34 @@ def plot_performance(iteration_number, figures_of_merit):
     return iteration_number, figures_of_merit
 
 
-def plot_mirror(genes, mirror, iteration_number):
-    plt.figure(2)   # set the figure to be plotting to
-    plt.clf()   # clear plot so it can be accessed again
+def plot_mirror(genes, best_genes, mirror, iteration_number):
+    fig = plt.figure(2)   # set the figure to be plotting to
+    plt.clf()   # clear plot so it can be plotted again
     if iteration_number == 0:
         plt.ion()   # enable interactive mode so we can continuously draw on the graph
         plt.show()  # show the plot window
+        plt.subplot(211)
+        plt.title('Current interpolated mirror')
+        plt.subplot(212)
         plt.title('Best person interpolated mirror')
     mirror_array = mirror.voltages_to_mirror_array(genes)
-    indices_of_real_values = np.where(mirror.numpy_dm_array!=-1)
-    # x_spacing = np.linspace(0,6,7)
-    # y_spacing = np.linspace(0,6,7)
-    # f = interp2d(x_spacing, y_spacing, mirror_array, kind='linear')
-    # interp_mirror = f(x_spacing,y_spacing)
+    best_mirror_array = mirror.voltages_to_mirror_array(best_genes)
+    current_x_spacing = np.linspace(0,6,7)
+    current_y_spacing = np.linspace(0,6,7)
+    # x=x.ravel()              #Flat input into 1d vector
+    # x=list(x[x!=np.isnan])   #eliminate any NaN
+    # znew = griddata((x, y), z, (xnew[None,:], ynew[:,None]), method='linear')
+    f = interp2d(current_x_spacing, current_y_spacing, mirror_array, kind='linear')
+    new_x_spacing = np.linspace(0,6,100)
+    new_y_spacing = np.linspace(0,6,100)
+    interp_mirror = f(new_x_spacing,new_y_spacing)
+    plt.subplot(211)
     plt.imshow(mirror_array,cmap=plt.get_cmap('gray'))
     plt.colorbar()
+
+    plt.subplot(212)
+    plt.imshow(best_mirror_array,cmap=plt.get_cmap('gray'))
+    plt.colorbar()
+
     plt.draw()  # draw these things on the graph
     plt.pause(.001)     # pause the program so the plot can be updated

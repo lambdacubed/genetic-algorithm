@@ -6,7 +6,7 @@ ic() -- Grabs an image from an IC camera
 NI_DAQ_voltage() -- acquires a voltage from the NI hardware (usually connected to the lock-in amplifier)
 
 """
-#TODO comment
+
 import figure_of_merit_functions as figure_of_merit_f
 
 import numpy as np  # useful general python library
@@ -40,6 +40,19 @@ PIXEL_FORMAT_TOP_DOWN = ('Y800', 'YGB0', 'YGB1', 'UYBY', 'Y16')
 
 
 def initialize_daq_device(device_string, fom_num):
+    """This returns the data acquisition object corresponding to the name in device_string
+
+    Parameters
+    ----------
+    device_string : data acquisition device, str
+        The name of the device to initialize
+    fom_num : figures of merit number, int or str
+        The int corresponding to the desired figure of merit calculation
+
+    Returns
+    -------
+    data acquisition class object
+    """
     if (device_string == DAQ_DEVICES[0]):  # if the device name is "Andor"
         return Andor(device_string, fom_num)
     elif (device_string == DAQ_DEVICES[1]):    # if the device name is "NI_DAQ"
@@ -58,20 +71,21 @@ def initialize_daq_device(device_string, fom_num):
 
 
 class daq_device(object):
-    """This object is used to initialize, acquire data from, and shut down various different hardware for data acquisition
+    """This is a data acquisition device used for figure of merit calculation
     """
     def __init__(self, device, fom_num):
         self.device = device    # save which acquisition device is being used
         self.initialize_array = file_f.read_initialization_variables("\\"+ self.device + "\\" + self.device + " properties.ini") # read in the initialization information from the file at device/device properites.ini
-        self.fom_num = fom_num
+        self.fom_num = fom_num  # save the desired figure of merit number
         
 
 
 
 class Andor(daq_device):
-
+    """This sets up image acquisition for the Andor camera in Peter's chamber (DL-604M-OEM)
+    """
     def __init__(self, device_string, fom_num):		
-        super().__init__(device_string, fom_num)     
+        super().__init__(device_string, fom_num)    # call the daq_device __init__ function
         
         read_mode_top = int(self.initialize_array[0])    # readout mode options: 0 Full Vertical binning;    1 Multi-Track;  2 Random-Track;  3 Single-Track;    4 Image;
         acquisition_mode_top = int(self.initialize_array[1])     # acquisition mode options: 1 Single scan;  2 Accumulate;   3 Kinetics;  4 Fast Kinetics;   5 Run till abort;
@@ -232,18 +246,13 @@ class Andor(daq_device):
 
     def figure_of_merit(self):
         """Determine the figure of merit using the selected device
-
-        Parameters
-        ----------
-        fom_num: figure of merit number, int
-            This determines which calculation to use when calculating the figure of merit
         """
         self.__acquire()
-        figure_of_merit_f.Andor_FOM(self.image, self.fom_num)
+        return figure_of_merit_f.Andor_FOM(self.image, self.fom_num)
 
     
     def __acquire(self):
-        """This function acquires an image from the andor camera and returns the image
+        """This function acquires an image from the andor camera
         """
 
         # Wait until the camera is in an idle state
@@ -281,7 +290,7 @@ class Andor(daq_device):
                 image[y,x] = image_pointer[x + y*self.number_x_pixels]
 
 
-        self.image = image
+        self.image = image  # save the image
 
     def shut_down(self):
         """Shut down the Andor camera
@@ -291,8 +300,10 @@ class Andor(daq_device):
 
 
 class NI_DAQ(daq_device):
+    """This sets up data acquisition from the NI box connected to the computer via PCI
+    """
     def __init__(self, device_string, fom_num):		
-        super().__init__(device_string, fom_num)   
+        super().__init__(device_string, fom_num)    # call the daq_device __init__ function
         
         self.number_of_reads = int(self.initialize_array[0])  # determine number voltages to average over
         directory_path = os.path.dirname(os.path.abspath(__file__)) # get the current directory's path
@@ -301,14 +312,9 @@ class NI_DAQ(daq_device):
 
     def figure_of_merit(self):
         """Determine the figure of merit using the selected device
-
-        Parameters
-        ----------
-        fom_num: figure of merit number, int
-            This determines which calculation to use when calculating the figure of merit
         """
-        self.__acquire()
-        figure_of_merit_f.NI_DAQ_FOM(self.voltage, self.fom_num)
+        self.__acquire()    # acquire voltages
+        return figure_of_merit_f.NI_DAQ_FOM(self.voltage, self.fom_num)
 
     
     def __acquire(self):
@@ -327,7 +333,7 @@ class NI_DAQ(daq_device):
             print('Press anything and enter to exit...')
             input()
             exit()
-        self.voltage = voltage
+        self.voltage = voltage  # save the voltage
            
 
 
@@ -337,8 +343,10 @@ class NI_DAQ(daq_device):
         return
 
 class IC(daq_device):
+    """This class sets up data acquisition for (theoretically) all cameras from the imaging source
+    """
     def __init__(self, device_string, fom_num):		
-        super().__init__(device_string, fom_num)     
+        super().__init__(device_string, fom_num)     # call the daq_device __init__ function
 
         
         self.ic_ic = IC_ImagingControl()    # initialize the imaging control grabber
@@ -462,14 +470,9 @@ class IC(daq_device):
 
     def figure_of_merit(self):
         """Determine the figure of merit using the selected device
-
-        Parameters
-        ----------
-        fom_num: figure of merit number, int
-            This determines which calculation to use when calculating the figure of merit
         """
-        self.__acquire()
-        figure_of_merit_f.ic_FOM(self.frameout, self.fom_num)
+        self.__acquire()    # acquire an image from the camera
+        return figure_of_merit_f.ic_FOM(self.frameout, self.fom_num)
 
     
     def __acquire(self):
@@ -488,10 +491,6 @@ class IC(daq_device):
 
         if self.flip_image:     # if the pixels are written top to bottom, flip the image upside down
             frameout = np.flipud(frameout)
-
-        #plt.imshow(frameout, cmap=plt.get_cmap('gray'))
-        #plt.colorbar()
-        #plt.show()
         
         del frame   # take care of memory allocation
 
@@ -510,73 +509,74 @@ class IC(daq_device):
 
 class Picoscope(daq_device):
     def __init__(self, device_string, fom_num):	
-        super().__init__(device_string, fom_num)
-        self.channels = ('A', 'B')
+        super().__init__(device_string, fom_num)    # call the daq_device __init__ function
+
+        self.channels = ('A', 'B')  # the only possible channels are 'A' and 'B'
 
         ps = ps2000a.PS2000a()  # create an instance of the picoscope 2000a class
 
-        channelA_coupling = self.initialize_array[0]
-        channelA_voltage_range = float(self.initialize_array[1])
-        channelA_offset = float(self.initialize_array[2])   # The VOffset, is an offset that the scope will ADD to your signal.
-        channelA_enabled = self.initialize_array[3] == "True"
-        channelA_bandwidth_limited = self.initialize_array[4] == "True"
+        channelA_coupling = self.initialize_array[0]    # DC or AC coupling
+        channelA_voltage_range = float(self.initialize_array[1])    # The voltage range is [-voltage_range, +voltage_range] (excluding offset)
+        channelA_offset = float(self.initialize_array[2])   # This is an offset that the scope will add to your signal.
+        channelA_enabled = self.initialize_array[3] == "True"   # determine if the channel is enabled
+        channelA_bandwidth_limited = self.initialize_array[4] == "True" # determine if the channel should use bandwidth limiting
 
-        channelB_coupling = self.initialize_array[5]
-        channelB_voltage_range = float(self.initialize_array[6])
-        channelB_offset = float(self.initialize_array[7])
-        channelB_enabled = self.initialize_array[8] == "True"
-        channelB_bandwidth_limited = self.initialize_array[9] == "True"
+        channelB_coupling = self.initialize_array[5]    # DC or AC coupling
+        channelB_voltage_range = float(self.initialize_array[6])    # The voltage range is [-voltage_range, +voltage_range] (excluding offset)
+        channelB_offset = float(self.initialize_array[7])   # This is an offset that the scope will add to your signal.
+        channelB_enabled = self.initialize_array[8] == "True"   # determine if the channel is enabled
+        channelB_bandwidth_limited = self.initialize_array[9] == "True" # determine if the channel should use bandwidth limiting
 
-        # Channel A - DC coupled, voltage: [-2,2]V , something, turn it on,  
+        # Initialize channel A with all of the desired parameters  
         channelARange = ps.setChannel(self.channels[0], channelA_coupling, channelA_voltage_range, channelA_offset, channelA_enabled, channelA_bandwidth_limited, probeAttenuation=1.0)
         print("Channel A range is ", channelARange)
 
+        # Initialize channel B with all of the desired parameters  
         channelBRange = ps.setChannel(self.channels[1], channelB_coupling, channelB_voltage_range, channelB_offset, channelB_enabled, channelB_bandwidth_limited, probeAttenuation=1.0)
         print("Channel B range is ", channelBRange)
         
-        trigger_channel = self.initialize_array[10]
-        trigger_threshold = float(self.initialize_array[11])
-        trigger_direction = self.initialize_array[12]
-        trigger_delay = int(self.initialize_array[13])
-        trigger_timeout = int(self.initialize_array[14])
-        trigger_enabled = self.initialize_array[15] == "True"
+        trigger_channel = self.initialize_array[10] # the trigger channel
+        trigger_threshold = float(self.initialize_array[11])    # threshold in volts to activate trigger
+        trigger_direction = self.initialize_array[12]   # "Rising" or "Falling" trigger
+        trigger_delay = int(self.initialize_array[13])  # number of clock cycles to wait from trigger conditions met until we actually trigger capture
+        trigger_timeout = int(self.initialize_array[14])    # time to wait in mS for the trigger to occur. If no trigger occurs it gives up & auto-triggers.
+        trigger_enabled = self.initialize_array[15] == "True"   # determine whether triggering is enabled
         
+        # Set up the trigger according to the input parameters
         ps.setSimpleTrigger(trigger_channel, trigger_threshold, trigger_direction, trigger_delay, trigger_timeout, trigger_enabled)
 
-        self.signal_channel = self.initialize_array[16]
-        acquisition_window_duration = float(self.initialize_array[17])
+        self.signal_channel = self.initialize_array[16] # the channel which will be the signal
+        acquisition_window_duration = float(self.initialize_array[17])  # the duration of the signal acquisition window
 
+        # idk what or why they do this, Jinpu said to do this because it was done this way in the pico-python example 
         obs_duration = 3 * acquisition_window_duration
         sampling_interval = obs_duration / 4096
-        (actualSamplingInterval, self.nSamples, maxSamples) = ps.setSamplingInterval(sampling_interval, obs_duration)
 
+        # set up the sampling interval
+        (actualSamplingInterval, self.nSamples, maxSamples) = ps.setSamplingInterval(sampling_interval, obs_duration)
         print("Sampling interval:", actualSamplingInterval, "\nNumber of samples:", nSamples)
 
-        self.ps = ps
+        self.ps = ps    # save the picoscope object
 
     def figure_of_merit(self):
         """Determine the figure of merit using the selected device
-
-        Parameters
-        ----------
-        fom_num: figure of merit number, int
-            This determines which calculation to use when calculating the figure of merit
         """
-        self.__acquire()
-        figure_of_merit_f.pico_FOM(self.data, self.fom_num)
+        self.__acquire()    # acquire a signal from the picoscope
+        return figure_of_merit_f.pico_FOM(self.data, self.fom_num)
 
     
     def __acquire(self):
-        
-        self.ps.runBlock() 
-        self.ps.waitReady()
-        # print("Done waiting for trigger")
-        self.data = self.ps.getDataV(self.signal_channel, self.nSamples, returnOverflow=False)
-        # dataB = ps.getDataV('B', nSamples, returnOverflow=False)
+        """Acquire the waveform from the picoscope
+        """
+        self.ps.runBlock()  # run the picoscope data acquisition 
+        self.ps.waitReady() # wait until the scope is ready
+        self.data = self.ps.getDataV(self.signal_channel, self.nSamples, returnOverflow=False)  # get the data from the picoscope
 
     def shut_down(self):
-        self.ps.stop()
-        self.ps.close()
+        """Shut down the picoscope
+        """
+        self.ps.stop()  # stop the picoscope running
+        self.ps.close() # close the picoscope connection
 
 
 class Test(object):
