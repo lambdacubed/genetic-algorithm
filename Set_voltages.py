@@ -17,7 +17,8 @@ def send_file(mirror_comm_device):
     """ This sets voltages on the mirror from a file of actuator voltages
     """
     num_genes = 37  # there are 37 mirror voltages
-    filename = input('Please input the filename contained in the ', file_f.MIRROR_VOLTAGES_FOLDER, ' folder (include .adf):')
+    print('Please input the filename contained in the ', file_f.MIRROR_VOLTAGES_FOLDER, ' folder (include .adf):')
+    filename = input()
     saved_voltages = file_f.read_adf(filename,num_genes)   # read the saved voltages from the given file
     mirror = mirrors.XineticsDM_37square()    # initialize the information about the mirror
     print('You are setting voltages for deformable mirror')
@@ -26,6 +27,9 @@ def send_file(mirror_comm_device):
         mirror_comm_device.write_to_mirror(saved_voltages, mirror) # send the voltages to the mirror
     else:
         print("Voltages would've broken mirror.")
+    while True:
+        input()
+        break
 
 
 def send_genes(mirror_comm_device):
@@ -36,6 +40,7 @@ def send_genes(mirror_comm_device):
     print("Enter the voltage you'd like to send to the mirror")
     while True:
         constant_voltage = input()
+        break
     test_voltages = np.zeros(num_genes) + constant_voltage   # create array of 37 constant voltages
     print('This is the genes:\n',test_voltages)    # show the operator what the actuator voltages are
     print('You are setting voltages for deformable mirror')

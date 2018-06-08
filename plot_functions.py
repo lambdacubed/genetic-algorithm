@@ -4,9 +4,13 @@ Functions:
 plot_performance() -- plots the figures of merit of the given people
 """
 
+#TODO comment
+
 import numpy as np  # general useful python library
 import matplotlib.pyplot as plt # plotting library
+import scipy.interpolate as interpolate
 from scipy.interpolate import interp2d
+from scipy.interpolate import griddata
 
 def plot_performance(iteration_number, figures_of_merit):
     """plot the figures of merit for the current generation with the previous generations
@@ -30,7 +34,7 @@ def plot_performance(iteration_number, figures_of_merit):
     if iteration_number == 0:
         plt.ion()   # enable interactive mode so we can continuously draw on the graph
         plt.show()  # show the plot window
-        plt.title('Figures of merit progression')   
+        plt.title('Figures of merit progression')
         plt.xlabel('Iterations')
         plt.ylabel('Figures of merit')
     iteration_number = iteration_number + 1 # add one to the number of iterations
@@ -49,27 +53,34 @@ def plot_mirror(genes, best_genes, mirror, iteration_number):
     if iteration_number == 0:
         plt.ion()   # enable interactive mode so we can continuously draw on the graph
         plt.show()  # show the plot window
-        plt.subplot(211)
-        plt.title('Current interpolated mirror')
-        plt.subplot(212)
-        plt.title('Best person interpolated mirror')
     mirror_array = mirror.voltages_to_mirror_array(genes)
     best_mirror_array = mirror.voltages_to_mirror_array(best_genes)
-    current_x_spacing = np.linspace(0,6,7)
+
+    current_x_spacing = np.linspace(0,6,7)  # TODO get this from mirror
     current_y_spacing = np.linspace(0,6,7)
-    # x=x.ravel()              #Flat input into 1d vector
-    # x=list(x[x!=np.isnan])   #eliminate any NaN
-    # znew = griddata((x, y), z, (xnew[None,:], ynew[:,None]), method='linear')
-    f = interp2d(current_x_spacing, current_y_spacing, mirror_array, kind='linear')
-    new_x_spacing = np.linspace(0,6,100)
-    new_y_spacing = np.linspace(0,6,100)
-    interp_mirror = f(new_x_spacing,new_y_spacing)
-    plt.subplot(211)
-    plt.imshow(mirror_array,cmap=plt.get_cmap('gray'))
+    X, Y = np.meshgrid(current_x_spacing, current_y_spacing)
+
+    mask = mirror_array > -1
+    mask_X = X[mask]
+    mask_Y = Y[mask]
+    mask_mirror_array = mirror_array[mask]
+    mask_best_mirror_array = best_mirror_array[mask]
+
+    new_x_spacing = np.linspace(0,6,40)
+    new_y_spacing = np.linspace(0,6,40)
+    new_X, new_Y = np.meshgrid(new_x_spacing, new_y_spacing)
+
+    interp_mirror = interpolate.griddata((mask_X, mask_Y), mask_mirror_array, (new_x_spacing[None,:], new_y_spacing[:,None]), method='cubic')
+    interp_best_mirror = interpolate.griddata((mask_X, mask_Y), mask_best_mirror_array, (new_x_spacing[None,:], new_y_spacing[:,None]), method='cubic')
+
+    plt.subplot(121)
+    plt.title('Current interpolated mirror')
+    plt.imshow(interp_mirror,cmap=plt.get_cmap('gray'))
     plt.colorbar()
 
-    plt.subplot(212)
-    plt.imshow(best_mirror_array,cmap=plt.get_cmap('gray'))
+    plt.subplot(122)
+    plt.title('Best person interpolated mirror')
+    plt.imshow(interp_best_mirror,cmap=plt.get_cmap('gray'))
     plt.colorbar()
 
     plt.draw()  # draw these things on the graph
