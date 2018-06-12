@@ -6,6 +6,8 @@ send_file() -- sets voltages on the mirror from a file of actuator voltages
 send_genes() -- sets constant voltages on the mirror which are determined within the function
 test_actuators -- test the voltages for individual actuators
 """
+#TODO write check input good function
+#TODO add put zeros in for send_genes
 
 import numpy as np  # general useful python library
 
@@ -28,8 +30,17 @@ def send_file(mirror_comm_device):
     else:
         print("Voltages would've broken mirror.")
     while True:
-        input()
-        break
+        print("Finished testing? (Enter 'y' or 'n')")
+        done = input()  # determine if the user is done
+        if (done == 'y'):
+            print("\nSending all 0's to the mirror")
+            test_voltages = np.zeros(37)    # set the actuator voltages back to 0    
+            print("Voltages are: ", test_voltages)
+            if mirror.fits_mirror(test_voltages):
+                mirror_comm_device.write_to_mirror(test_voltages, mirror)   # write the set of voltages to the mirror
+            else:
+                print("Voltages would've broken mirror.")
+            break
 
 
 def send_genes(mirror_comm_device):
@@ -39,7 +50,7 @@ def send_genes(mirror_comm_device):
     mirror = mirrors.XineticsDM_37square()    # initialize the information about the mirror
     print("Enter the voltage you'd like to send to the mirror")
     while True:
-        constant_voltage = input()
+        constant_voltage = float(input())
         break
     test_voltages = np.zeros(num_genes) + constant_voltage   # create array of 37 constant voltages
     print('This is the genes:\n',test_voltages)    # show the operator what the actuator voltages are
