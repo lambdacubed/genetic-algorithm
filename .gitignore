@@ -2,15 +2,19 @@
 *.pyc
 __pycache__/
 
+# Exclude any GA output files 
+*.adf
+*.csv
 
-
-# This means exclude everything in Andor/
+# Exclude everything in Andor/
 Andor/*
 
 # Include these files which would have been excluded
 !'Andor properties.ini'
 !Andor_python.py
 
-# Include any .png files
-!*.png
-
+# Exclude any image files
+*.png
+*.jpg
+*.jpeg
+*.bmp
