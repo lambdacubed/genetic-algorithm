@@ -75,12 +75,12 @@ def plot_mirror(genes, best_genes, mirror, iteration_number):
 
     plt.subplot(121)
     plt.title('Current interpolated mirror')
-    plt.imshow(interp_mirror,cmap=plt.get_cmap('gray'))
+    plt.imshow(interp_mirror,cmap=plt.get_cmap('plasma'))
     plt.colorbar()
 
     plt.subplot(122)
     plt.title('Best person interpolated mirror')
-    plt.imshow(interp_best_mirror,cmap=plt.get_cmap('gray'))
+    plt.imshow(interp_best_mirror,cmap=plt.get_cmap('plasma'))
     plt.colorbar()
 
     plt.draw()  # draw these things on the graph

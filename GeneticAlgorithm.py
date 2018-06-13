@@ -26,14 +26,17 @@ def save_different_directory(different_directory):
     while True:
         different = input()
         if different == 'y':
-            print('Enter another directory (make sure to have a \ at the end)')
-            different_directory = input()
-            if os.path.exists(different_directory):
-                break
-            print("That directory doesn't exist. Enter another.")
+            while True:
+                print('Enter another directory (make sure to have a \ at the end)')
+                different_directory = input()
+                if os.path.exists(different_directory):
+                    break
+                print("That directory doesn't exist. Enter another.")
+            break
         elif different == 'n':
             break
-        print('You did not enter a y or n, or the directory you entered does not exist')
+        else:
+            print('You did not enter a y or n')
     return different_directory
 
 def anything_else():    # determine if the user wants to save anything else from the algorithm

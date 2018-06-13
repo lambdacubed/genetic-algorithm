@@ -8,6 +8,7 @@ test_actuators -- test the voltages for individual actuators
 """
 #TODO write check input good function
 #TODO add put zeros in for send_genes
+#TODO exception handling wrong input
 
 import numpy as np  # general useful python library
 
@@ -19,18 +20,26 @@ def send_file(mirror_comm_device):
     """ This sets voltages on the mirror from a file of actuator voltages
     """
     num_genes = 37  # there are 37 mirror voltages
-    print('Please input the filename contained in the ', file_f.MIRROR_VOLTAGES_FOLDER, ' folder (include .adf):')
-    filename = input()
-    saved_voltages = file_f.read_adf(filename,num_genes)   # read the saved voltages from the given file
     mirror = mirrors.XineticsDM_37square()    # initialize the information about the mirror
-    print('You are setting voltages for deformable mirror')
-    print('Actuator voltages are: ', saved_voltages)   # show the operator what voltages they are sending to the mirror
-    if mirror.fits_mirror(saved_voltages):
-        mirror_comm_device.write_to_mirror(saved_voltages, mirror) # send the voltages to the mirror
-    else:
-        print("Voltages would've broken mirror.")
     while True:
-        print("Finished testing? (Enter 'y' or 'n')")
+
+        print('Please input the filename contained in the ', file_f.MIRROR_VOLTAGES_FOLDER, ' folder (include .adf):')
+        while True:
+            filename = input()
+            if file_f.read_adf(filename, num_genes):
+                saved_voltages = file_f.read_adf(filename,num_genes)   # read the saved voltages from the given file
+                break
+            else:
+                print("That file doesn't exist! Enter another one.")
+
+        print('You are setting voltages for deformable mirror')
+        print('Actuator voltages are: ', saved_voltages)   # show the operator what voltages they are sending to the mirror
+        if mirror.fits_mirror(saved_voltages):
+            mirror_comm_device.write_to_mirror(saved_voltages, mirror) # send the voltages to the mirror
+        else:
+            print("Voltages would've broken mirror.")
+
+        print("Finished testing? (Enter 'y' if done and anything else if not done)")
         done = input()  # determine if the user is done
         if (done == 'y'):
             print("\nSending all 0's to the mirror")
@@ -48,23 +57,37 @@ def send_genes(mirror_comm_device):
     """
     num_genes = 37  # there are 37 mirror voltages
     mirror = mirrors.XineticsDM_37square()    # initialize the information about the mirror
-    print("Enter the voltage you'd like to send to the mirror")
     while True:
-        constant_voltage = float(input())
-        break
-    test_voltages = np.zeros(num_genes) + constant_voltage   # create array of 37 constant voltages
-    print('This is the genes:\n',test_voltages)    # show the operator what the actuator voltages are
-    print('You are setting voltages for deformable mirror')
-    if mirror.fits_mirror(test_voltages):
-        mirror_comm_device.write_to_mirror(test_voltages, mirror)  # write the voltages to the mirror
-    else:
-        print("Voltages would've broken mirror.")
+        print("Enter the voltage you'd like to send to the mirror")
+        while True:
+            constant_voltage = float(input())
+            break
+        test_voltages = np.zeros(num_genes) + constant_voltage   # create array of 37 constant voltages
+        print('This is the genes:\n',test_voltages)    # show the operator what the actuator voltages are
+        print('You are setting voltages for deformable mirror')
+        if mirror.fits_mirror(test_voltages):
+            mirror_comm_device.write_to_mirror(test_voltages, mirror)  # write the voltages to the mirror
+        else:
+            print("Voltages would've broken mirror.")
+
+        print("Finished testing? (Enter 'y' if done and anything else if not done)")
+        done = input()  # determine if the user is done
+        if (done == 'y'):
+            print("\nSending all 0's to the mirror")
+            test_voltages = np.zeros(37)    # set the actuator voltages back to 0    
+            print("Voltages are: ", test_voltages)
+            if mirror.fits_mirror(test_voltages):
+                mirror_comm_device.write_to_mirror(test_voltages, mirror)   # write the set of voltages to the mirror
+            else:
+                print("Voltages would've broken mirror.")
+            break
 
 
 def test_actuators(mirror_comm_device):
     num_genes = 37  # there are 37 actuators
     mirror = mirrors.XineticsDM_37square()    # initialize the information about the mirror
     while True: # test actuators until done testing
+        test_voltages = np.zeros(37) + 0    # initialize the array of test voltages to 0
 
         while True: # create a while loop until the actuator to be tested is determined
             print("Which actuator would you like to test?\nEnter a integer from 0 to 36.")
@@ -75,23 +98,23 @@ def test_actuators(mirror_comm_device):
                 break
             print("You didn't enter a number between 0 and 36")
 
-        while True:     
-            print("What would you like the singular test actuator's voltage to be?")
-            print("\tNote: The voltages for all of the other actuators will be 0")
-            voltage = float(input())    # get the voltage from the operator
-            print('Is this input okay: ', voltage, ' (Enter y or n)')
-            good = input()  # get input from the user
-            if good == 'y': # if the input was good
-                break
+            #TODO similar check to see if thing breaks mirror when entering voltage
+        # while True:     
+        print("What would you like the singular test actuator's voltage to be?")
+        print("\tNote: The voltages for all of the other actuators will be 0")
+        voltage = float(input())    # get the voltage from the operator
+            # print('Is this input okay: ', voltage, ' (Enter y or n)')
+            # good = input()  # get input from the user
+            # if good == 'y': # if the input was good
+            #     break
 
-        test_voltages = np.zeros(37) + 0    # initialize the array of test voltages to 0
         test_voltages[actuator_index] = voltage
         print("Voltages are: ", test_voltages)
         if mirror.fits_mirror(test_voltages):
             mirror_comm_device.write_to_mirror(test_voltages, mirror)   # write the set of voltages to the mirror
         else:
             print("Voltages would've broken mirror.")
-        print("Finished testing? (Enter 'y' or 'n')")
+        print("Finished testing? (Enter 'y' if done and anything else if not done)")
         done = input()  # determine if the user is done
         if (done == 'y'):
             print("\nSending all 0's to the mirror")
