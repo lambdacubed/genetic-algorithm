@@ -1,0 +1,20 @@
+# Exclude python 3 bytecode
+*.pyc
+__pycache__/
+
+# Exclude any GA output files 
+*.adf
+*.csv
+
+# Exclude everything in Andor/
+Andor/*
+
+# Include these files which would have been excluded
+!'Andor properties.ini'
+!Andor_python.py
+
+# Exclude any image files
+*.png
+*.jpg
+*.jpeg
+*.bmp
