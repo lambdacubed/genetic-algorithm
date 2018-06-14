@@ -116,31 +116,32 @@ def initialize():
 
     initialization_variables = file_f.read_initialization_variables(INITIALIZATION_FILE)	# read all of the initialization variables from the ini file
     
-    num_genes = int(initialization_variables[0])              # number of genes of each person (or mirror actuators)
-    num_init_parents = int(initialization_variables[1])        # number of parents to start with
-    num_init_children = int(initialization_variables[2])     # number of starting children
+    num_init_parents = int(initialization_variables[0])        # number of parents to start with
+    num_init_children = int(initialization_variables[1])     # number of starting children
     
     """Note: You can either have an initial voltage or a filename to read from, not both"""
     if initialization_variables[3] == "None":
         init_voltage = None
     else:
-        init_voltage = int(initialization_variables[3])          # initial voltage on mirror actuators
+        init_voltage = int(initialization_variables[2])          # initial voltage on mirror actuators
 
     if initialization_variables[4] == "None":
         filename = None
     else:
-        filename = str(initialization_variables[4])             # name of file to read from
+        filename = str(initialization_variables[3])             # name of file to read from
     '''Note: Also, it can only read the file if it is in saved_mirrors'''
 
-    num_parents = int(initialization_variables[5])            # number of parents in loop iterations
-    num_children = int(initialization_variables[6])          # number of children in loop iterations
-    mutation_percentage = int(initialization_variables[7])    # if you want 20% mutation, enter 20
+    num_parents = int(initialization_variables[4])            # number of parents in loop iterations
+    num_children = int(initialization_variables[5])          # number of children in loop iterations
+    mutation_percentage = int(initialization_variables[6])    # if you want 20% mutation, enter 20
 
-    data_acquisition_device = initialization_variables[8]
+    data_acquisition_device = initialization_variables[7]
 
-    mirror_communication_device = initialization_variables[9]
+    mirror_communication_device = initialization_variables[8]
 
-    fom_num = int(initialization_variables[10])
+    fom_num = int(initialization_variables[9])
+
+    deformable_mirror = initialization_variables[10]
 
     if not (init_voltage is None) and not (filename is None):
         print('Error: You have both an initial voltage and a filename to read from')
@@ -155,6 +156,7 @@ def initialize():
     print('\tMutation percentage: ', mutation_percentage, '\n')
     print('\tData acquisition device: ', data_acquisition_device, '\n')
     print('\tMirror communication device: ', mirror_communication_device, '\n')
+    print('\tDeformable mirror: ', deformable_mirror, '\n')
     print('\tFigure of merit calculation number: ', fom_num, '\n')
     print('Would you like to change any of these values?\nEnter "y" or "n"')
     print('Note: the locations of all important variables are in the README.txt file')
@@ -169,6 +171,7 @@ def initialize():
             print('To change the filename or initial voltage, enter "init setting"')
             print('To change the data acquisition device, enter "daq"')
             print('To change the mirror communication device, enter "comm"')
+            print('To change the deformable mirror, enter "mirror"')
             print('To change the figure of merit calculation number, enter "fom"')
             print('To change nothing, enter "none"')
             key_input = input() # get input from the user
@@ -199,7 +202,7 @@ def initialize():
                     break
             elif key_input == 'daq':   # determine what the user input
                 print('You are changing the data acquisition device')
-                print('The options are "Andor", "NI_DAQ", "Picoscope" or "IC"')
+                print('The options are "Andor", "NI_DAQ", "Picoscope", "IC", or "Test"')
                 data_acquisition_device = change_value('string')   # change the variable's value
                 if not change_others(): # determine if the user wants to change any other parameters
                     break
@@ -212,6 +215,11 @@ def initialize():
             elif key_input == 'fom':   # determine what the user input
                 print('You are changing the figure of merit calculation number')
                 fom_num = change_value('int')   # change the variable's value
+                if not change_others(): # determine if the user wants to change any other parameters
+                    break
+            elif key_input == 'mirror':   # determine what the user input
+                print('You are changing the deformable mirror')
+                deformable_mirror = change_value('string')   # change the variable's value
                 if not change_others(): # determine if the user wants to change any other parameters
                     break
             elif key_input == 'init setting':   # determine what the user input
@@ -243,7 +251,7 @@ def initialize():
                 break
             else:
                 print('You did not enter a valid command')
-    return num_genes, num_init_parents, num_init_children, init_voltage, filename, num_parents, num_children, mutation_percentage, data_acquisition_device, mirror_communication_device, fom_num
+    return num_genes, num_init_parents, num_init_children, init_voltage, filename, num_parents, num_children, mutation_percentage, data_acquisition_device, mirror_communication_device, fom_num, deformable_mirror
 
 if __name__ == "__main__":
     print('You meant to run GeneticAlgorithm.py')

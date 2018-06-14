@@ -6,9 +6,6 @@ send_file() -- sets voltages on the mirror from a file of actuator voltages
 send_genes() -- sets constant voltages on the mirror which are determined within the function
 test_actuators -- test the voltages for individual actuators
 """
-#TODO write check input good function
-#TODO add put zeros in for send_genes
-#TODO exception handling wrong input
 
 import numpy as np  # general useful python library
 
@@ -24,14 +21,8 @@ def send_file(mirror_comm_device):
     while True:
 
         print('Please input the filename contained in the ', file_f.MIRROR_VOLTAGES_FOLDER, ' folder (include .adf):')
-        while True:
-            filename = input()
-            if file_f.read_adf(filename, num_genes):
-                saved_voltages = file_f.read_adf(filename,num_genes)   # read the saved voltages from the given file
-                break
-            else:
-                print("That file doesn't exist! Enter another one.")
-
+        saved_voltages = file_f.read_adf(filename,num_genes)   # read the saved voltages from the given file
+        
         print('You are setting voltages for deformable mirror')
         print('Actuator voltages are: ', saved_voltages)   # show the operator what voltages they are sending to the mirror
         if mirror.fits_mirror(saved_voltages):
@@ -99,16 +90,16 @@ def test_actuators(mirror_comm_device):
             print("You didn't enter a number between 0 and 36")
 
             #TODO similar check to see if thing breaks mirror when entering voltage
-        # while True:     
-        print("What would you like the singular test actuator's voltage to be?")
-        print("\tNote: The voltages for all of the other actuators will be 0")
-        voltage = float(input())    # get the voltage from the operator
-            # print('Is this input okay: ', voltage, ' (Enter y or n)')
-            # good = input()  # get input from the user
-            # if good == 'y': # if the input was good
-            #     break
+        while True:     
+            print("What would you like the singular test actuator's voltage to be?")
+            print("\tNote: The voltages for all of the other actuators will be 0")
+            voltage = float(input())    # get the voltage from the operator
+            test_voltages[actuator_index] = voltage
+            if mirror.fits_mirror(test_voltages):
+                break
+            else:
+                print("That voltage would've broken the mirror")
 
-        test_voltages[actuator_index] = voltage
         print("Voltages are: ", test_voltages)
         if mirror.fits_mirror(test_voltages):
             mirror_comm_device.write_to_mirror(test_voltages, mirror)   # write the set of voltages to the mirror

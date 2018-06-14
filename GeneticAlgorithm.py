@@ -16,10 +16,7 @@ import os
 import matplotlib.pyplot as plt
 import data_acquisition_devices as daq_devices
 import mirror_communication_devices as mirror_devices
-#import ic_capture
 
-ADF_FOLDER       = '\\saved_mirrors\\'     # directory for mirror actuator files
-FOM_GRAPH_FOLDER = '\\saved_graphs\\'    # directory for figure of merit graphs (csv's and pdf's)
 
 def save_different_directory(different_directory):
     print("Would you like to save to a different directory? Enter 'y' or 'n'")
@@ -58,7 +55,7 @@ def genetic_algorithm():
     print('You are running the genetic algorithm')
     
     #This function sets all of the values of the number of parents, children, and mutation amount
-    num_genes, num_init_parents, num_init_children, init_voltage, filename, num_parents, num_children, mutation_percentage, data_acquisition_device, mirror_communication_device, fom_num = initialization_f.initialize()
+    num_init_parents, num_init_children, init_voltage, filename, num_parents, num_children, mutation_percentage, data_acquisition_device, mirror_communication_device, fom_num, deformable_mirror = initialization_f.initialize()
     """Note: To change the default values, go into genetic_algorithm.ini"""
     
     print('\nNOTE: LabView must be open in order to run the program\n')
@@ -77,11 +74,13 @@ def genetic_algorithm():
     
     print('Starting...')
     start_time = time.time()    # determine the time when the algorithm starts
-    mirror = mirrors.XineticsDM_37square() # initialize the class to determine if actuator voltages break the mirror or not
+    mirror = mirrors.initialize_mirror(deformable_mirror) # initialize the class to determine if actuator voltages break the mirror or not
     daq_device = daq_devices.initialize_daq_device(data_acquisition_device, fom_num)	# open and initialize the data acquisition device being used
     mirror_comm_device = mirror_devices.initialize_comm_device(mirror_communication_device)
     iteration_number = 0
     
+    num_genes = mirror.num_genes
+
     parents = people.parent_group(num_init_parents, num_genes, init_voltage, filename)    # create parents from above constraints
     children = people.child_group(num_init_children, parents, mirror)       # create children from the given parents
     children.mutate(mutation_percentage, mirror)    # mutate the children
@@ -142,8 +141,8 @@ def genetic_algorithm():
         saving_option = input() # get user input for what they want to do
         if saving_option == 'write':    # if they want to write the genes to a file
             directory_path = os.path.dirname(os.path.abspath(__file__)) # get the current directory's path
-            print("\tThe default directory is " + directory_path + ADF_FOLDER)
-            directory_path = save_different_directory(directory_path + ADF_FOLDER)
+            print("\tThe default directory is " + directory_path + file_f.MIRROR_VOLTAGES_FOLDER)
+            directory_path = save_different_directory(directory_path + file_f.MIRROR_VOLTAGES_FOLDER)
             print("Enter the file name you want to be saved (include the .adf extension):\nNote: this will overwrite a file with the same name")
             filename = input()  # get user input from for what filename they want
             file_f.write_adf(best_person, directory_path + filename)    # write the genes to the input file
@@ -151,9 +150,9 @@ def genetic_algorithm():
                 break   # break out of the while loop
         elif saving_option == 'graph':  # if the user wants to save the graph
             directory_path = os.path.dirname(os.path.abspath(__file__)) # get the current directory's path
-            print("\tThe default directory is " + directory_path + FOM_GRAPH_FOLDER)
-            directory_path = save_different_directory(directory_path + FOM_GRAPH_FOLDER)
-            print("Enter the file name you want to be saved (for test.csv, input test):\nNote: This saves a .csv of graph's values and a pdf of the python figure\nAlso, this will overwrite a file with the same name")
+            print("\tThe default directory is " + directory_path + file_f.MIRROR_GRAPH_FOLDER)
+            directory_path = save_different_directory(directory_path + file_f.MIRROR_GRAPH_FOLDER)
+            print("Enter the file name you want to be saved (for test.csv & test.pdf, input test):\nNote: This saves a .csv of graph's values and a pdf of the python figure\nAlso, this will overwrite a file with the same name")
             filename = input()  # get user input from for what filename they want
             file_f.write_figures_of_merit(figures_of_merit, directory_path + filename)   # write the figures of merit to a comma separated value file
             plt.savefig( directory_path +'%s.pdf' %  filename, dpi = 300, bbox_inches = 'tight')

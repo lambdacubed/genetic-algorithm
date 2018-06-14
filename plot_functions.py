@@ -74,12 +74,12 @@ def plot_mirror(genes, best_genes, mirror, iteration_number):
     interp_best_mirror = interpolate.griddata((mask_X, mask_Y), mask_best_mirror_array, (new_x_spacing[None,:], new_y_spacing[:,None]), method='cubic')
 
     plt.subplot(121)
-    plt.title('Current interpolated mirror')
+    plt.title('Current best mirror')
     plt.imshow(interp_mirror,cmap=plt.get_cmap('plasma'))
     plt.colorbar()
 
     plt.subplot(122)
-    plt.title('Best person interpolated mirror')
+    plt.title('Overall best mirror')
     plt.imshow(interp_best_mirror,cmap=plt.get_cmap('plasma'))
     plt.colorbar()
 
