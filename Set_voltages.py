@@ -89,7 +89,6 @@ def test_actuators(mirror_comm_device):
                 break
             print("You didn't enter a number between 0 and 36")
 
-            #TODO similar check to see if thing breaks mirror when entering voltage
         while True:     
             print("What would you like the singular test actuator's voltage to be?")
             print("\tNote: The voltages for all of the other actuators will be 0")

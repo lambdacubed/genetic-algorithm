@@ -50,23 +50,8 @@ anyone using the program. I have listed what they are and their locations.
 They should all be at the top of the program.
 
 
-
 WAITING_TIME - time between writing to the mirror and measuring the figure of merit. 
 location: people.py
-
-PCI_BOARDS - addresses of the pci cards given in NI-MAX. 
-
-location: mirror_functions.py
-
-
-
-MAX_DIFF - maximum difference between neighboring actuators
-location: mirror_functions.py
-
-MAX_VOLTAGE - maximum voltage an actuator can have
-
-location: mirror_functions.py
-
 
 
 ADF_FOLDER - directory to store mirror files (as ascii data files)
@@ -74,17 +59,9 @@ ADF_FOLDER - directory to store mirror files (as ascii data files)
 location: file_functions.py
 
 
-
 FOM_GRAPH_FOLDER - directory to store figure of merit graph data (as csv files)
 
 location: file_functions.py
 
-
-
-MIRROR_GRAPH_FOLDER - directory for the graphs of the mirror
-
-location: file_functions.py
-NUMBER_OF_READS - number of voltage values to average over in the photodiode
-location: figure_of_merit_functions.py
 
 

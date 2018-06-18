@@ -64,7 +64,7 @@ def read_adf(filename, num_genes):
                         new_gene_array = np.append(new_gene_array, float(row[1]))   #read in the second value as the gene voltage
         return new_gene_array
     except FileNotFoundError:
-        print("That file doesn't exist! Please enter a new file (including the .adf) within: ", new_dir_path)
+        print("That adf file doesn't exist! Please enter a new file (including the .adf) within: ", new_dir_path)
         new_filename = input()
         return read_adf(new_filename, num_genes)
 
