@@ -24,13 +24,13 @@ def send_file(mirror_comm_device):
     while True:
 
         print('Please input the filename contained in the ', file_f.MIRROR_VOLTAGES_FOLDER, ' folder (include .adf):')
-        while True:
-            filename = input()
-            if file_f.read_adf(filename, num_genes):
-                saved_voltages = file_f.read_adf(filename,num_genes)   # read the saved voltages from the given file
-                break
-            else:
-                print("That file doesn't exist! Enter another one.")
+        # while True:
+        filename = input()
+            # if file_f.read_adf(filename, num_genes):
+        saved_voltages = file_f.read_adf(filename,num_genes)   # read the saved voltages from the given file
+            #     break
+            # else:
+            #     print("That file doesn't exist! Enter another one.")
 
         print('You are setting voltages for deformable mirror')
         print('Actuator voltages are: ', saved_voltages)   # show the operator what voltages they are sending to the mirror

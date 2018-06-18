@@ -25,7 +25,7 @@ class XineticsDM_37square(object):
         The array contains all of the pairs of actuators which neighbor each other (including diagonal)
     """
     def __init__(self):
-        self.max_difference =  30 # maximum difference in voltage between neighboring actuators
+        self.max_difference =  20 # maximum difference in voltage between neighboring actuators
         self.max_voltage = 100 # maximumm voltage an acuator can have
         self.min_voltage = 0
 
