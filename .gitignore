@@ -6,7 +6,6 @@ __pycache__/
 *.adf
 *.csv
 
-
 # Exclude everything in Andor/
 Andor/*
 
