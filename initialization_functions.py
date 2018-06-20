@@ -120,12 +120,12 @@ def initialize():
     num_init_children = int(initialization_variables[1])     # number of starting children
     
     """Note: You can either have an initial voltage or a filename to read from, not both"""
-    if initialization_variables[3] == "None":
+    if initialization_variables[2] == "None":
         init_voltage = None
     else:
         init_voltage = int(initialization_variables[2])          # initial voltage on mirror actuators
 
-    if initialization_variables[4] == "None":
+    if initialization_variables[3] == "None":
         filename = None
     else:
         filename = str(initialization_variables[3])             # name of file to read from
@@ -251,7 +251,7 @@ def initialize():
                 break
             else:
                 print('You did not enter a valid command')
-    return num_genes, num_init_parents, num_init_children, init_voltage, filename, num_parents, num_children, mutation_percentage, data_acquisition_device, mirror_communication_device, fom_num, deformable_mirror
+    return num_init_parents, num_init_children, init_voltage, filename, num_parents, num_children, mutation_percentage, data_acquisition_device, mirror_communication_device, fom_num, deformable_mirror
 
 if __name__ == "__main__":
     print('You meant to run GeneticAlgorithm.py')

@@ -60,18 +60,19 @@ def plot_mirror(genes, best_genes, mirror, iteration_number):
     current_y_spacing = np.linspace(0,6,7)
     X, Y = np.meshgrid(current_x_spacing, current_y_spacing)
 
-    mask = mirror_array > -1
-    mask_X = X[mask]
-    mask_Y = Y[mask]
-    mask_mirror_array = mirror_array[mask]
-    mask_best_mirror_array = best_mirror_array[mask]
+    mask = np.where(~np.isnan(mirror_array), True, False)
+
+    X_masked = X[mask]
+    Y_masked = Y[mask]
+    mirror_array_masked = mirror_array[mask]
+    best_mirror_array_masked = best_mirror_array[mask]
 
     new_x_spacing = np.linspace(0,6,40)
     new_y_spacing = np.linspace(0,6,40)
     new_X, new_Y = np.meshgrid(new_x_spacing, new_y_spacing)
 
-    interp_mirror = interpolate.griddata((mask_X, mask_Y), mask_mirror_array, (new_x_spacing[None,:], new_y_spacing[:,None]), method='cubic')
-    interp_best_mirror = interpolate.griddata((mask_X, mask_Y), mask_best_mirror_array, (new_x_spacing[None,:], new_y_spacing[:,None]), method='cubic')
+    interp_mirror = interpolate.griddata((X_masked, Y_masked), mirror_array_masked, (new_x_spacing[None,:], new_y_spacing[:,None]), method='cubic')
+    interp_best_mirror = interpolate.griddata((X_masked, Y_masked), best_mirror_array_masked, (new_x_spacing[None,:], new_y_spacing[:,None]), method='cubic')
 
     plt.subplot(121)
     plt.title('Current best mirror')

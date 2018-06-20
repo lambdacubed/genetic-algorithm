@@ -80,7 +80,7 @@ def genetic_algorithm():
     iteration_number = 0
     
     num_genes = mirror.num_genes
-
+    print((num_genes), 'type num genes')
     parents = people.parent_group(num_init_parents, num_genes, init_voltage, filename)    # create parents from above constraints
     children = people.child_group(num_init_children, parents, mirror)       # create children from the given parents
     children.mutate(mutation_percentage, mirror)    # mutate the children
@@ -138,13 +138,13 @@ def genetic_algorithm():
     
     daq_device.shut_down()	# shut off the data acquisition device
     
-    print('What would you like to save?')    # once the loop has finished, the user decides what to do with the genes made
+    print('\nWhat would you like to save?')    # once the loop has finished, the user decides what to do with the genes made
     while True:     # create an infinite loop
-        print("\tFor writing the best person's actuator voltages to a file, input 'write'")
-        print('\tFor saving graph data, input "graph"')
-        print("\tFor saving the best person's mirror (as an adf file) from each iteration, input 'all_best'")
-        print("\tFor saving everything, input 'everything'")
-        print('\tFor doing nothing, input "none"')
+        print("\nFor writing the best person's actuator voltages to a file, input 'write'")
+        print('For saving graph data, input "graph"')
+        print("For saving the best person's mirror (as an adf file) from each iteration, input 'all_best'")
+        print("For saving everything, input 'everything'")
+        print('For doing nothing, input "none"')
         saving_option = input() # get user input for what they want to do
         directory_path = os.path.dirname(os.path.abspath(__file__)) # get the current directory's path
         if saving_option == 'write':    # if they want to write the genes to a file
