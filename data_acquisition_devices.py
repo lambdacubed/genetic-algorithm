@@ -240,6 +240,29 @@ class Andor(daq_device):
         self.__acquire()
         self.background_image = self.image
 
+        if fom_num == 2:
+            print("Input 'ready' when ready to take an image to determine the image centroid")
+            while True:
+                ready = input()
+                if ready == "ready":
+                    break
+                else:
+                    print("You didn't input 'ready'")
+            moment00 = np.sum(self.image)
+            sum = 0
+            for x in range(self.number_x_pixels):
+                sum += (x+1) * np.sum(self.image[:,x])
+            moment10 = sum
+
+            sum = 0
+            for y in range(self.number_y_pixels):
+                sum += (y+1) * np.sum(self.image[y,:])
+            moment01 = sum
+
+            self.mu_x = (moment10-1)/moment00
+            self.mu_y = (moment01-1)/moment00
+
+
     def __check_success(self, error_value, function_name):
         """Check whether or not the program was able to perform the given function for the Andor camera
         
