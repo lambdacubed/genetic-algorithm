@@ -24,7 +24,7 @@ def write_adf(person, filename):
     """
     
     array = person.genes
-    with open(filename, 'w') as fileout:   # open the file to write values to
+    with open(filename, 'w', newline='') as fileout:   # open the file to write values to
         tsvwriter = csv.writer(fileout, delimiter='\t') # write to the given file with values separated by tabs
         tsvwriter.writerow(['@ASCII_DATA_FILE'])    # start of the header
         tsvwriter.writerow(['NCurves=1'])   # number of genes which are output
@@ -56,7 +56,7 @@ def read_adf(filename, num_genes):
     directory_path = os.path.dirname(os.path.abspath(__file__)) # get the current directory's path
     new_dir_path = directory_path + MIRROR_VOLTAGES_FOLDER  # add the mirror voltages folder to the path
     try:
-        with open(new_dir_path + filename, 'r') as filein:    # open the file to be read from
+        with open(new_dir_path + filename, 'r', newline='') as filein:    # open the file to be read from
             tsvreader = csv.reader(filein, delimiter = '\t')    # make the values tab separated
             for row in tsvreader:   # for each row in the file
                 if len(row) == 2:   # if the number of values in the row is 2
@@ -81,7 +81,7 @@ def write_figures_of_merit(figures_of_merit, filename):
     filename : name of the file, string
         The name of the file you want to save the genes to
     """
-    with open(filename + '.csv', 'w') as fileout:   # open the file to write values to
+    with open(filename + '.csv', 'w', newline='') as fileout:   # open the file to write values to
         csvwriter = csv.writer(fileout) # write to the given file with values separated by tabs
         for i in range(figures_of_merit.shape[0]):  # this should only happen num_parents number of times
             csvwriter.writerow(figures_of_merit[i])     # write a row of the csv file 
@@ -95,7 +95,7 @@ def read_initialization_variables(filename):
     """
 	initialization_array = np.empty(0,'float')  # initialize a numpy array of size 0
 	directory_path = os.path.dirname(os.path.abspath(__file__)) # get the current directory's path
-	with open(directory_path + filename, 'r') as filein:    # open the file to be read from
+	with open(directory_path + filename, 'r', newline='') as filein:    # open the file to be read from
 		tsvreader = csv.reader(filein, delimiter = " ")    # make the values space separated
 		line_number = 1	# keep track of the line 
 		for row in tsvreader:		# go through each row in the file
