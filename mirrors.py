@@ -14,10 +14,11 @@ import matplotlib.pyplot as plt
 MIRRORS = ("37_square_1")
 
 def initialize_mirror(which_mirror):
-    if which_mirror == MIRRORS[0]:
-        return XineticsDM37_1()
-    else:
-        print("You didn't enter a correct mirror.")
+    # print(which_mirror)
+    # if which_mirror == MIRRORS[0]:
+    return XineticsDM37_1()
+    # else:
+    #     print("You didn't enter a correct mirror.")
 
 
 
@@ -29,7 +30,7 @@ class deformable_mirror(object):
         return genes
 
 
-def is_mirror_safe(self, genes, max_voltage, min_voltage, actuator_neighbors, max_difference):
+    def is_mirror_safe(self, genes, max_voltage, min_voltage, actuator_neighbors, max_difference):
 
         valid_genes = True    # the child is good until proven bad
         for i in range(len(actuator_neighbors)):      # Test every actuator value with its neighbors' values
@@ -43,7 +44,7 @@ def is_mirror_safe(self, genes, max_voltage, min_voltage, actuator_neighbors, ma
 
 
 class square_grid_mirror(deformable_mirror):
-    def actuator_neighbors(dm_array):
+    def actuator_neighbors(self, dm_array):
         dm_actuator_neighbors = []      # initialize the empty list of neighboring actuators
 
         # The nested for loops go through the entire array and determine which actuators 
@@ -81,7 +82,7 @@ class square_grid_mirror(deformable_mirror):
 
         return dm_actuator_neighbors
 
-    def plot_voltages(self, voltages, dm_array):
+    def plot_voltage_array(self, voltages, dm_array):
         """Plots what a set of voltages look like on the mirror
         
         Parameters
@@ -89,11 +90,11 @@ class square_grid_mirror(deformable_mirror):
         voltages : voltages, numpy array
             This is an array of voltages sen to the mirror in the same form as voltage genes
         """
-        mirror = self.voltages_to_mirror_array(voltages, dm_array)  # convert the voltages to a 2d array which looks like the mirror
+        mirror = self.voltages_to_mirror(voltages, dm_array)  # convert the voltages to a 2d array which looks like the mirror
         plt.imshow(mirror)  # plot it
         plt.show()
     
-    def voltages_to_mirror_array(self, voltages, dm_array):
+    def voltages_to_mirror(self, voltages, dm_array):
         """Converts a numpy array of voltages to a 2d numpy array of which has the voltages at the correct indices of the DM
         
         Parameters
@@ -118,7 +119,7 @@ class square_grid_mirror(deformable_mirror):
                             mirror[row_i][col_j] = voltages[index]  # set the mirror voltage equal to the voltage array index
         return mirror
 
-    def mirror_to_voltages_array(self, mirror, dm_array):
+    def mirror_to_voltages(self, mirror, dm_array):
         """Converts a 2d numpy array of which has the voltages at the correct indices of the DM to a list of voltages
         
         Parameters
@@ -167,8 +168,7 @@ class XineticsDM37_1(square_grid_mirror):
 
         self.dm_array = dm_array
         self.numpy_dm_array = np.array(dm_array)
-        self.num_genes = np.where(np.sum(self.numpy_dm_array >= 0))
-
+        self.num_genes = np.sum(self.numpy_dm_array >= 0)
 
         # make the neighbor list an accessible attribute of the object actuator_array
         self.dm_actuator_neighbors = self.actuator_neighbors(self.dm_array)  # make the neighbors list an attribute
@@ -223,9 +223,14 @@ class XineticsDM37_1(square_grid_mirror):
                         genes[2], genes[15], genes[4], genes[25], genes[30], genes[13], genes[12]])
         return mapped_genes
 
-    
+    def mirror_to_voltages_array(self, mirror):
+        return self.mirror_to_voltages(mirror, self.dm_array)
 
+    def voltages_to_mirror_array(self, voltages):
+        return self.voltages_to_mirror(voltages, self.dm_array)
 
+    def plot_voltages(self, voltages):
+        self.plot_voltage_array(voltages, dm_array)
    
 
 if __name__ == "__main__":

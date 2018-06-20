@@ -66,7 +66,8 @@ def read_adf(filename, num_genes):
     except FileNotFoundError:
         print("That adf file doesn't exist! Please enter a new file (including the .adf) within: ", new_dir_path)
         new_filename = input()
-        return read_adf(new_filename, num_genes)
+        number_of_genes = int(num_genes)    # convert the tuple to an int TODO
+        return read_adf(new_filename, number_of_genes)
 
 
 
