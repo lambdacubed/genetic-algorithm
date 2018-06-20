@@ -11,14 +11,17 @@ and makes sure the voltage differences aren't too high
 import numpy as np
 import matplotlib.pyplot as plt
 
-MIRRORS = ("37_square_1")
+MIRRORS = ("37_square_1", "37_square_2", "Test_37")
 
 def initialize_mirror(which_mirror):
-    # print(which_mirror)
-    # if which_mirror == MIRRORS[0]:
-    return XineticsDM37_1()
-    # else:
-    #     print("You didn't enter a correct mirror.")
+    if which_mirror == MIRRORS[0]:
+        return XineticsDM37_1()
+    elif which_mirror == MIRRORS[1]:
+        return XineticsDM37_2()
+    elif which_mirror == MIRRORS[2]:
+        return Test_37()
+    else:
+        print("You didn't enter a correct mirror.")
 
 
 
@@ -232,6 +235,26 @@ class XineticsDM37_1(square_grid_mirror):
     def plot_voltages(self, voltages):
         self.plot_voltage_array(voltages, dm_array)
    
+class XineticsDM37_2(square_grid_mirror):
+    def __init__(self):
+        print("Not implemented yet")
+        exit()
+
+class Test_37(square_grid_mirror):
+    def __init__(self):
+        self.num_genes = 37
+        self.dm_array = [[0]]
+        self.numpy_dm_array = np.array(self.dm_array)
+        return
+
+    def fits_mirror(self, genes):
+        return True
+
+    def __array_conversion_PCI(self, genes):
+        return np.zeros(self.num_genes)
+
+    def __array_conversion_USB(self, genes):
+        return np.zeros(self.num_genes)
 
 if __name__ == "__main__":
     print('You meant to run GeneticAlgorithm.py')

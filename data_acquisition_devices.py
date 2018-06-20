@@ -230,6 +230,16 @@ class Andor(daq_device):
         error_value = self.andor_dll.SetImage(horizontal_binning, vertical_binning, horizontal_start, horizontal_end, vertical_start, vertical_end);
         self.__check_success(error_value, "Set Image")
 
+        print("Input 'ready' when ready to take a background image")
+        while True:
+            ready = input()
+            if ready == "ready":
+                break
+            else:
+                print("You didn't input 'ready'")
+        self.__acquire()
+        self.background_image = self.image
+
     def __check_success(self, error_value, function_name):
         """Check whether or not the program was able to perform the given function for the Andor camera
         
@@ -248,6 +258,7 @@ class Andor(daq_device):
         """Determine the figure of merit using the selected device
         """
         self.__acquire()
+        self.image = self.image - self.background_image
         return figure_of_merit_f.Andor_FOM(self.image, self.fom_num)
 
     
