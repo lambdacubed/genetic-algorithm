@@ -111,7 +111,7 @@ def NI_DAQ_FOM(voltage, fom_num):
     elif fom_num == 2:
     	return -voltage
     
-def Andor_FOM(image, fom_num):
+def Andor_FOM(image, fom_num = "Test", mu_x = None, mu_y = None):
     if fom_num == "test":   # if the daq device is being tested
         plt.imshow(image,cmap=plt.get_cmap('gray')) # plot the image
         plt.colorbar()

@@ -268,8 +268,8 @@ class Andor(daq_device):
                 y_radius = input()
 
                 mask = np.zeros_like(self.image)
-                for x in range(mask.shape[0]):
-                    for y in range(mask.shape[1]):
+                for x in range(mask.shape[1]):
+                    for y in range(mask.shape[0]):
                         mask[y,x] = (((x-x_center)/x_radius)**2 + ((y-y_center)/y_radius)**2) < 1
                 self.mask = mask
 
@@ -300,6 +300,15 @@ class Andor(daq_device):
             self.mu_x = (moment10-1)/moment00
             self.mu_y = (moment01-1)/moment00
 
+            sigma_x = 10
+            sigma_y = 10
+
+            gaussian_weight = np.zeros_like(self.image)
+            for x in range(gaussian_weight.shape[1]):
+                for y in range(gaussian_weight.shape[0]):
+                    gaussian_weight[y,x] = (1/(2*np.pi*sigma_x*sigma_y)) * np.exp(-np.power(x - mu_x, 2.) / (2 * np.power(sigma_x, 2.)) - np.power(y - mu_y, 2.) / (2 * np.power(sigma_y, 2.)))
+
+            self.gaussian_weight = gaussian_weight
 
     def __check_success(self, error_value, function_name):
         """Check whether or not the program was able to perform the given function for the Andor camera
@@ -320,9 +329,16 @@ class Andor(daq_device):
         """
         self.__acquire()
         self.image = self.image - self.background_image
-        if fom_num == 1:
+
+        if fom_num == "Test":
+            return figure_of_merit_f.Andor_FOM(self.image, self.fom_num)
+        elif fom_num == 1:
             self.image = self.image * self.mask
-        return figure_of_merit_f.Andor_FOM(self.image, self.fom_num)
+            return figure_of_merit_f.Andor_FOM(self.image, fom_num)
+        elif fom_num == 2:
+            self.image = self.image * self.mask * self.gaussian_weight
+            return figure_of_merit_f.Andor_FOM(self.image, fom_num)
+
 
     
     def __acquire(self):
