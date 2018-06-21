@@ -244,7 +244,7 @@ class Andor(daq_device):
         self.__acquire()
         self.background_image = self.image
 
-        if fom_num == 1:
+        if fom_num == 1 or fom_num == 2:
             while True:
                 print("Input 'capture' to capture and display the Andor camera image and 'ready' when ready to determine the area in which to sum the pixels")
                 command = input()
@@ -332,13 +332,15 @@ class Andor(daq_device):
 
         if fom_num == "Test":
             return figure_of_merit_f.Andor_FOM(self.image, self.fom_num)
+            #figure_of_merit_f.Andor_FOM(self.background_image, "Test")
         elif fom_num == 1:
             self.image = self.image * self.mask
+            #figure_of_merit_f.Andor_FOM(self.mask, "Test")
             return figure_of_merit_f.Andor_FOM(self.image, fom_num)
         elif fom_num == 2:
             self.image = self.image * self.mask * self.gaussian_weight
+            #figure_of_merit_f.Andor_FOM(self.gaussian_weight, "Test")
             return figure_of_merit_f.Andor_FOM(self.image, fom_num)
-
 
     
     def __acquire(self):

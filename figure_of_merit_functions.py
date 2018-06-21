@@ -119,7 +119,7 @@ def Andor_FOM(image, fom_num = "Test", mu_x = None, mu_y = None):
         #plt.savefig('//Andor//test.png')
         return
 
-    if fom_num == 1:
+    if fom_num == 1 or fom_num == 2:
         total = np.sum(image)
         fom = total
         print(fom)
