@@ -230,24 +230,62 @@ class Andor(daq_device):
         error_value = self.andor_dll.SetImage(horizontal_binning, vertical_binning, horizontal_start, horizontal_end, vertical_start, vertical_end);
         self.__check_success(error_value, "Set Image")
 
-        print("Input 'ready' when ready to take a background image")
         while True:
-            ready = input()
-            if ready == "ready":
+            print("Input 'capture' to capture and display the Andor camera image and 'ready' when ready to save it a background image")
+            command = input()
+            if command == "ready":
                 break
+            elif command == 'capture':
+                print("Close the image window to continue the program")
+                self.__acquire()
+                figure_of_merit_f.Andor_FOM(self.image, "Test")
             else:
-                print("You didn't input 'ready'")
+                print("You didn't enter a correct input")
         self.__acquire()
         self.background_image = self.image
 
-        if fom_num == 2:
-            print("Input 'ready' when ready to take an image to determine the image centroid")
+        if fom_num == 1:
             while True:
-                ready = input()
-                if ready == "ready":
+                print("Input 'capture' to capture and display the Andor camera image and 'ready' when ready to determine the area in which to sum the pixels")
+                command = input()
+                if command == "ready":
                     break
+                elif command == 'capture':
+                    print("Close the image window to continue the program")
+                    self.__acquire()
+                    figure_of_merit_f.Andor_FOM(self.image, "Test")
                 else:
-                    print("You didn't input 'ready'")
+                    print("You didn't enter a correct input")
+
+                print("Input the central x pixel of the ellipse (in pixels)")
+                x_center = input()
+                print("Input the central y pixel of the ellipse (in pixels)")
+                y_center = input()
+
+                print("Input the horizontal radius of the ellipse (in pixels)")
+                x_radius = input()
+                print("Input the vertical radius of the ellipse (in pixels)")
+                y_radius = input()
+
+                mask = np.zeros_like(self.image)
+                for x in range(mask.shape[0]):
+                    for y in range(mask.shape[1]):
+                        mask[y,x] = (((x-x_center)/x_radius)**2 + ((y-y_center)/y_radius)**2) < 1
+                self.mask = mask
+
+
+        if fom_num == 2:
+            while True:
+                print("Input 'capture' to capture and display the Andor camera image and 'ready' when ready to use this image to determine the image centroid")
+                command = input()
+                if command == "ready":
+                    break
+                elif command == 'capture':
+                    print("Close the image window to continue the program")
+                    self.__acquire()
+                    figure_of_merit_f.Andor_FOM(self.image, "Test")
+                else:
+                    print("You didn't enter a correct input")
             moment00 = np.sum(self.image)
             sum = 0
             for x in range(self.number_x_pixels):
@@ -282,6 +320,8 @@ class Andor(daq_device):
         """
         self.__acquire()
         self.image = self.image - self.background_image
+        if fom_num == 1:
+            self.image = self.image * self.mask
         return figure_of_merit_f.Andor_FOM(self.image, self.fom_num)
 
     

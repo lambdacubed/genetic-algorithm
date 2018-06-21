@@ -125,4 +125,3 @@ def Andor_FOM(image, fom_num):
         print(fom)
         return fom
 
-    if fom_num == 2:
