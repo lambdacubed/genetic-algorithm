@@ -52,7 +52,7 @@ class PCI_DM_comm(object):
         """
         if  mirror.fits_mirror(genes): # if the genes don't break the mirror
             applied_voltages = genes * self.voltage_multiplier # multiply each gene by some mirror constant to get the voltages sent to the mirror
-            voltage_array = mirror.__array_conversion_PCI(applied_voltages) # change the mapping of the indices
+            voltage_array = mirror.array_conversion_PCI(applied_voltages) # change the mapping of the indices
             self.__send_to_board(voltage_array[:19], voltage_array[19:])
         else:
             print("Error: Tried writing the genes to the mirror, but they would've broken it")
@@ -131,8 +131,8 @@ class USB_DM_comm(object):
         """
         if mirror.fits_mirror(genes): # if the genes don't break the mirror
             applied_voltages = genes * self.voltage_multiplier # multiply each gene by some mirror constant to get the voltages sent to the mirror
-            voltage_array = mirror.__array_conversion_USB(applied_voltages) # change the mapping of the indices
-            self.__send_to_board(voltages)
+            voltage_array = mirror.array_conversion_USB(applied_voltages) # change the mapping of the indices
+            self.__send_to_board(voltage_array)
         else:
             print("Error: Tried writing the genes to the mirror, but they would've broken it")
 

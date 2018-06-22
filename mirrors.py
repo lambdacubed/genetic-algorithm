@@ -26,11 +26,11 @@ def initialize_mirror(which_mirror):
 
 
 class deformable_mirror(object):
-    def __array_conversion_PCI(self, genes):
-        return genes
+    def array_conversion_PCI(self, genes):
+        return np.array(genes)
 
-    def __array_conversion_USB(self,genes):
-        return genes
+    def array_conversion_USB(self,genes):
+        return np.array(genes)
 
 
     def is_mirror_safe(self, genes, max_voltage, min_voltage, actuator_neighbors, max_difference):
@@ -206,7 +206,7 @@ class XineticsDM37_1(square_grid_mirror):
         return self.is_mirror_safe(genes, self.max_voltage, self.min_voltage, self.dm_actuator_neighbors, self.max_difference)
 
 
-    def __array_conversion_PCI(self, genes):
+    def array_conversion_PCI(self, genes):
         """Maps genes to a different order so that indices in the genes array corresponds to the correct index of the mirror
 
         Parameters
