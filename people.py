@@ -8,7 +8,7 @@ child() -- Creates a child from parents
 child_group() -- A container for multiple children
 """
 
-WAITING_TIME = 0.01 # seconds between writing to the mirror and starting the figure of merit function
+WAITING_TIME = 0.1 # seconds between writing to the mirror and starting the figure of merit function
 
 import numpy as np
 import math     # this library has math functions like sine and cosine
@@ -34,12 +34,12 @@ class person(object):
 		self.num_genes = num_genes      # store the number of genes the person has
 		self.figure_of_merit = 0        # initialize the figure of merit to be 0
 
-	def test_person(self, mirror, daq_device, mirror_comm_device):
+	def test_person(self, dm_actuators, daq_device, mirror_comm_device):
 		"""write each person to the mirror to measure the figure of merits
 
 		Parameters
 		----------
-		mirror : object from mirror_functions.py
+		dm_actuators : object from mirror_functions.py
 			This contains the list of neighbors to make sure the genes don't break the mirror.
 
 		Returns
@@ -47,7 +47,7 @@ class person(object):
 		figure_of_merit : figure of merit, float
 			The figure of merit of this specific person.
 		"""
-		mirror_comm_device.write_to_mirror(self.genes, mirror)       # write the genes to the mirror
+		mirror_comm_device.write_to_mirror(self.genes, dm_actuators)       # write the genes to the mirror
 		time.sleep(WAITING_TIME)    # wait for the given amount of time
 		self.figure_of_merit = daq_device.figure_of_merit()  # measure and calculate the figure of merit
 		return self.figure_of_merit # return the measured figure of merit
@@ -109,37 +109,37 @@ class child(person):
 	----------
 	All attributes are the same as the person class
 	"""
-	def __init__(self, num_genes, parent_group, mirror):
+	def __init__(self, num_genes, parent_group, dm_actuators):
 		super().__init__(num_genes)     # inherit the attributes from the person class
-		self.inherit_genes(parent_group, mirror)    # inherit genes from the parent(s) who are making children
+		self.inherit_genes(parent_group, dm_actuators)    # inherit genes from the parent(s) who are making children
 
-	def inherit_genes(self, parent_group, mirror):
+	def inherit_genes(self, parent_group, dm_actuators):
 		"""inherit each gene from a random parent
 		
 		Parameters
 		----------
 		parent_group : object from people.py
 			This contains the parents used for this generation of children.
-		mirror : object from mirror_functions.py
+		dm_actuators : object from mirror_functions.py
 			This contains the list of neighbors to make sure the genes don't break the mirror.
 		"""
 		while True:     # keep inheriting genes until the child doesn't break the mirror
 			for j in range(self.num_genes):     # for each of the child's genes
 				random_parent = np.random.randint(0,parent_group.num_parents)   # choose a random parent to inherit from
 				self.genes[j] = parent_group.parents[random_parent].genes[j]    # inherit the jth gene from this random parent
-			if mirror.fits_mirror(self.genes):     # check if the child breaks the mirror
+			if dm_actuators.fits_mirror(self.genes):     # check if the child breaks the mirror
 				break       # if the child doesn't break the mirror, leave the while loop
 			'''else:    # if the genes broke the mirror
 				print('broken inherited genes')'''
 
-	def mutate_child(self, mut_squared, mirror):
+	def mutate_child(self, mut_squared, dm_actuators):
 		"""mutates each child according to the mutation percentage given
 
 		Parameters
 		----------
 		mut_squared : mutation percentage squared, float
 			This is a relative measure of how much the genes will be mutated.
-		mirror : object from mirror_functions.py
+		dm_actuators : object from mirror_functions.py
 			This contains the list of neighbors to make sure the genes don't break the mirror.
 		"""
 		
@@ -156,7 +156,7 @@ class child(person):
 						new_genes[j] = new_gene  # pass on the new gene
 						mutation_vector = np.append(mutation_vector, mutation_amount[j])      # remember the amount of mutation for that gene
 				# Note: if one of the if statement conditions isn't met, the original gene is kept
-			if mirror.fits_mirror(new_genes):    # determine whether this child is safe for the mirror
+			if dm_actuators.fits_mirror(new_genes):    # determine whether this child is safe for the mirror
 				if mutation_vector.size:    # if there were any mutations
 					self.amount_mutated = np.mean(mutation_vector)     # store the amount this gene was mutated by
 				self.genes = new_genes      # the child's new genes are the successfully mutated genes
@@ -176,31 +176,31 @@ class child_group(object):
 	children: children, 1D numpy array containing the children class
 		The array containing the children.
 	"""
-	def __init__(self, num_children, parent_group, mirror):
+	def __init__(self, num_children, parent_group, dm_actuators):
 		if parent_group.num_parents > num_children:     # create more children than parents
 			print('Error: You tried to create less children than parents')
 		self.num_genes = parent_group.num_genes     # the number of genes in each child is the same as the number of genes in each parent
 		self.num_children = num_children        # set the number of children
 		children = np.empty(0)      # initialize the children matrix
 		for i in range(num_children):   # create i children
-			children = np.append(children,child(self.num_genes,parent_group, mirror))   # append a new child onto the children array
+			children = np.append(children,child(self.num_genes,parent_group, dm_actuators))   # append a new child onto the children array
 		# Note: must append the children instead of initializing becuase initializing creates num_children instances of the same child in the vector
 		self.children = children    # set this array to be the children attribute
 
-	def mutate(self, mutation_percentage, mirror):
+	def mutate(self, mutation_percentage, dm_actuators):
 		"""Mutates approximately the mutation percentage proportion of children
 		
 		Parameters
 		----------
 		mutation_percentage : mutation percentage, float
 			This is a relative measure of how much the genes will be mutated.
-		mirror : object from mirror_functions.py
+		dm_actuators : object from mirror_functions.py
 			This contains the list of neighbors to make sure the genes don't break the mirror.
 		"""
 		mutation = mutation_percentage / 100    # convert the percentage to a decimal
 		mutation_squared = mutation*mutation    # square the mutation percentage for later use
 		for i in range(self.num_children):   # Mutate each child
-			self.children[i].mutate_child(mutation_squared, mirror)        # call the mutate attribute    
+			self.children[i].mutate_child(mutation_squared, dm_actuators)        # call the mutate attribute    
 
 class person_group(object):
 	"""creates and modifies an array of children
@@ -219,16 +219,16 @@ class person_group(object):
 		self.num_people = parent_group.num_parents + child_group.num_children        # set the number of children
 		self.people = list(parent_group.parents) + list(child_group.children)    # initialize the children matrix
 
-	def test_and_sort_people(self, mirror, daq_device, mirror_comm_device):
+	def test_and_sort_people(self, dm_actuators, daq_device, mirror_comm_device):
 		"""Determine the figure of merit for each parent and child.
 
 		Parameters
 		----------
-		mirror : object from mirror_functions.py
+		dm_actuators : object from mirror_functions.py
 			This contains the list of neighbors to make sure the genes don't break the mirror.
 		"""
 		for each_person in self.people: # go through every person in all_people
-			each_person.test_person(mirror, daq_device, mirror_comm_device)   # measure the figure of merit of every person
+			each_person.test_person(dm_actuators, daq_device, mirror_comm_device)   # measure the figure of merit of every person
 		self.people.sort(key=operator.attrgetter('figure_of_merit'), reverse = True)    # sort the people so that the highest figure of merit is 0th indexed 
 
 	def best_figures_of_merit(self, num_parents):

@@ -24,7 +24,7 @@ class PCI_DM_comm(object):
         self.ACTUATOR_ADDRESSES = [[0x34, 0x54, 0x28, 0x38, 0x08, 0x04, 0x24, 0x50, 0x58, 0x2C, 0x30, 0x1C, 0x10, 0x14, 0x0C, 0x00, 0x3C, 0x20, 0x5C],
                                    [0x24, 0x5C, 0x58, 0x54, 0x20, 0x10, 0x08, 0x1C, 0x14, 0x0C, 0x04, 0x00, 0x3C, 0x38, 0x34, 0x30, 0x2C, 0x28]]
 
-        self.voltage_multiplier = 2.65   # this is the constant used to multiply the genes to get the correct voltage output
+        self.VOLTAGE_MULTIPLIER = 2.65   # this is the constant used to multiply the genes to get the correct voltage output
 
         directory_path = os.path.dirname(os.path.abspath(__file__)) # get the current directory's path
 
@@ -51,8 +51,8 @@ class PCI_DM_comm(object):
             This contains the list of neighbors to make sure the genes don't break the mirror.
         """
         if  mirror.fits_mirror(genes): # if the genes don't break the mirror
-            applied_voltages = genes * self.voltage_multiplier # multiply each gene by some mirror constant to get the voltages sent to the mirror
-            voltage_array = mirror.__array_conversion_PCI(applied_voltages) # change the mapping of the indices
+            applied_voltages = genes * self.VOLTAGE_MULTIPLIER # multiply each gene by some mirror constant to get the voltages sent to the mirror
+            voltage_array = self.__array_conversion(applied_voltages) # change the mapping of the indices
             self.__send_to_board(voltage_array[:19], voltage_array[19:])
         else:
             print("Error: Tried writing the genes to the mirror, but they would've broken it")
@@ -108,6 +108,25 @@ class PCI_DM_comm(object):
         return
         """
 
+    def __array_conversion(self, genes):
+        """Maps genes to a different order so that indices in the genes array corresponds to the correct index of the mirror
+
+        Parameters
+        ----------
+        genes: genes, 1D numpy array
+            the genes or actuator voltages to be tested
+
+        Returns
+        -------
+        mapped_genes : mapped genes, 1D numpy array
+            The genes to be tested after being mapped so the index corresponds to the correct actuator
+        """
+        # Change the order of the genes so each index corresponds with the correct index on the deformable mirror
+        mapped_genes = np.array([genes[17], genes[31], genes[32], genes[8], genes[18], genes[9], genes[1], genes[16], genes[0], genes[23],
+                        genes[6], genes[21], genes[20], genes[19], genes[33], genes[22], genes[7], genes[10], genes[5], genes[29],
+                        genes[27], genes[26], genes[28], genes[14], genes[35], genes[24], genes[36], genes[34], genes[11], genes[3],
+                        genes[2], genes[15], genes[4], genes[25], genes[30], genes[13], genes[12]])
+        return mapped_genes
 
 
 class USB_DM_comm(object):
@@ -130,8 +149,7 @@ class USB_DM_comm(object):
             This contains the list of neighbors to make sure the genes don't break the mirror.
         """
         if mirror.fits_mirror(genes): # if the genes don't break the mirror
-            applied_voltages = genes * self.voltage_multiplier # multiply each gene by some mirror constant to get the voltages sent to the mirror
-            voltage_array = mirror.__array_conversion_USB(applied_voltages) # change the mapping of the indices
+            voltages = genes * self.voltage_multiplier  # multiply each of the genes so that the actuators get the correct voltage
             self.__send_to_board(voltages)
         else:
             print("Error: Tried writing the genes to the mirror, but they would've broken it")

@@ -14,14 +14,14 @@ import file_functions as file_f     # use this for reading and writing to files
 import os   # this gives information about the current working directory
 
 # These libraries are needed for IC cameras
-#from pyicic.IC_ImagingControl import *
+from pyicic.IC_ImagingControl import *
 import copy
 
 # This is needed for the NI DAQ
 import win32com.client  # Python ActiveX Client for calling and running LabVIEW
 
 # this is needed for the picoscope
-#from picoscope import ps2000a
+from picoscope import ps2000a
 
 # These libraries are needed for the Andor camera
 import ctypes   # this is used for being a wrapper to the c functions in the Andor dll
@@ -224,91 +224,137 @@ class Andor(daq_device):
         vertical_start = ctypes.c_int(vertical_start_top)           # Start row of image to be taken (inclusive)
         vertical_end = ctypes.c_int(vertical_end_top)       # End row of image to be taken (inclusive)
         
+        # Check Image parameters
+        if(horizontal_start_top > horizontal_end_top or vertical_start_top > vertical_end_top):
+            print("Image start positions must not be greater than end positions")
+
+        if(horizontal_start_top < 1 or horizontal_end_top > gblXPixels.value):
+            print("Image horizontal positions must be >0 and <detector width");
+
+        if(vertical_start_top < 1 or vertical_end_top > gblYPixels.value):
+        	print("Image vertical positions must be >0 and <detector height");
+        
+        if((horizontal_end_top - horizontal_start_top + 1) % horizontal_binning_top!=0):
+            print("Image width must be a multiple of Horizontal Binning");
+            print("Total number of horizontal pixels: ", gblXPixels.value)
+            print("Current image width: ", horizontal_end_top - horizontal_start_top + 1, "pixels")
+            print("Current horizontal binning is: ", horizontal_binning_top)
+
+        if((vertical_end_top - vertical_start_top + 1) % vertical_binning_top!=0):
+            print("Image height must be a multiple of Vertical Binning");
+            print("Total number of vertical pixels: ", gblYPixels.value)
+            print("Current image height: ", vertical_end_top - vertical_start_top + 1)
+            print("Current vertical binning is :", vertical_binning_top)
+
+
         # Determine number of horizontal and vertical pixels, and set the region and settings for image capture
-        self.number_x_pixels = horizontal_end_top - horizontal_start_top + 1
-        self.number_y_pixels = vertical_end_top - vertical_start_top + 1
+        self.number_x_pixels = int((horizontal_end_top - horizontal_start_top + 1) / horizontal_binning_top)
+        self.number_y_pixels = int((vertical_end_top - vertical_start_top + 1) / vertical_binning_top)
         error_value = self.andor_dll.SetImage(horizontal_binning, vertical_binning, horizontal_start, horizontal_end, vertical_start, vertical_end);
         self.__check_success(error_value, "Set Image")
 
         while True:
-            print("Input 'capture' to capture and display the Andor camera image and 'ready' when ready to save it a background image")
+            print("\nInput 'capture' to capture and display the Andor camera image and 'ready' when ready to save it as background image")
             command = input()
             if command == "ready":
                 break
             elif command == 'capture':
                 print("Close the image window to continue the program")
                 self.__acquire()
-                figure_of_merit_f.Andor_FOM(self.image, "Test")
+                figure_of_merit_f.Andor_FOM(self.image, "test")
             else:
                 print("You didn't enter a correct input")
         self.__acquire()
         self.background_image = self.image
 
-        if fom_num == 1 or fom_num == 2:
-            while True:
-                print("Input 'capture' to capture and display the Andor camera image and 'ready' when ready to determine the area in which to sum the pixels")
-                command = input()
-                if command == "ready":
-                    break
-                elif command == 'capture':
-                    print("Close the image window to continue the program")
-                    self.__acquire()
-                    figure_of_merit_f.Andor_FOM(self.image, "Test")
-                else:
-                    print("You didn't enter a correct input")
-
-                print("Input the central x pixel of the ellipse (in pixels)")
-                x_center = input()
-                print("Input the central y pixel of the ellipse (in pixels)")
-                y_center = input()
-
-                print("Input the horizontal radius of the ellipse (in pixels)")
-                x_radius = input()
-                print("Input the vertical radius of the ellipse (in pixels)")
-                y_radius = input()
-
-                mask = np.zeros_like(self.image)
-                for x in range(mask.shape[1]):
-                    for y in range(mask.shape[0]):
-                        mask[y,x] = (((x-x_center)/x_radius)**2 + ((y-y_center)/y_radius)**2) < 1
-                self.mask = mask
-
-
         if fom_num == 2:
             while True:
-                print("Input 'capture' to capture and display the Andor camera image and 'ready' when ready to use this image to determine the image centroid")
+                print("\nInput 'capture' to capture and display the Andor camera image and 'ready' when ready to take an image (minus the background) to determine the image centroid for the Gaussian mask")
                 command = input()
                 if command == "ready":
                     break
                 elif command == 'capture':
                     print("Close the image window to continue the program")
                     self.__acquire()
-                    figure_of_merit_f.Andor_FOM(self.image, "Test")
+                    figure_of_merit_f.Andor_FOM(self.image-self.background_image, "test")
                 else:
                     print("You didn't enter a correct input")
-            moment00 = np.sum(self.image)
+
+            self.__acquire()
+            image = self.image - self.background_image
+            moment00 = np.sum(image)
             sum = 0
             for x in range(self.number_x_pixels):
-                sum += (x+1) * np.sum(self.image[:,x])
+                sum += (x+1) * np.sum(image[:,x])
             moment10 = sum
 
             sum = 0
             for y in range(self.number_y_pixels):
-                sum += (y+1) * np.sum(self.image[y,:])
+                sum += (y+1) * np.sum(image[y,:])
             moment01 = sum
 
-            self.mu_x = (moment10-1)/moment00
-            self.mu_y = (moment01-1)/moment00
+            mu_x = (moment10-1)/moment00
+            mu_y = (moment01-1)/moment00
 
-            sigma_x = 10
-            sigma_y = 10
+            mu_x = 28
+            mu_y = 32
+            print("Image centroid at (", mu_x, ", ", mu_y, ")")
 
-            gaussian_weight = np.zeros_like(self.image)
+            #sigma of 5 used for focusing beam
+            #signam 9 used for repositioning
+            sigma_x = 5
+            sigma_y = 5
+
+            gaussian_weight = np.zeros_like(image)
             for x in range(gaussian_weight.shape[1]):
                 for y in range(gaussian_weight.shape[0]):
-                    gaussian_weight[y,x] = (1/(2*np.pi*sigma_x*sigma_y)) * np.exp(-np.power(x - mu_x, 2.) / (2 * np.power(sigma_x, 2.)) - np.power(y - mu_y, 2.) / (2 * np.power(sigma_y, 2.)))
+                    gaussian_weight[y,x] = np.exp(-np.power(x - mu_x, 2.) / (2 * np.power(sigma_x, 2.)) - np.power(y - mu_y, 2.) / (2 * np.power(sigma_y, 2.)))
+
 
             self.gaussian_weight = gaussian_weight
+            print("This is the gaussian weighting function:")
+            figure_of_merit_f.Andor_FOM(self.gaussian_weight, "test")
+
+
+        if fom_num == 1 or fom_num == 2:
+            while True:
+                print("\nInput 'capture' to capture and display the Andor camera image minus the background and 'ready' when ready to determine the mask in which to sum the pixels")
+                command = input()
+                if command == "ready":
+                    break
+                elif command == 'capture':
+                    print("Close the image window to continue the program")
+                    self.__acquire()
+                    figure_of_merit_f.Andor_FOM(self.image-self.background_image, "test")
+                else:
+                    print("You didn't enter a correct input")
+
+            print("Input the central x pixel of the ellipse (in pixels)")
+            x_center = int(input())
+            print("Input the central y pixel of the ellipse (in pixels)")
+            y_center = int(input())
+
+            print("Input the horizontal radius of the ellipse (in pixels)")
+            x_radius = int(input())
+            print("Input the vertical radius of the ellipse (in pixels)")
+            y_radius = int(input())
+
+            mask = np.zeros_like(self.image)
+            for x in range(mask.shape[0]):
+                for y in range(mask.shape[1]):
+                    mask[y,x] = (((x-x_center)/x_radius)**2 + ((y-y_center)/y_radius)**2) < 1
+            self.mask = mask
+            
+            print("This is the mask:")
+            figure_of_merit_f.Andor_FOM(self.mask, "test")
+
+            print("This is the image minus background multiplied by the mask")
+            figure_of_merit_f.Andor_FOM(self.mask * (self.image - self.background_image), "test")
+
+        if fom_num == 2:
+            print("This is the gaussian weighting function multiplied by the mask:")
+            figure_of_merit_f.Andor_FOM(self.mask * self.gaussian_weight, "test")
+            self.gaussian_mask = self.mask * self.gaussian_weight
 
     def __check_success(self, error_value, function_name):
         """Check whether or not the program was able to perform the given function for the Andor camera
@@ -329,18 +375,14 @@ class Andor(daq_device):
         """
         self.__acquire()
         self.image = self.image - self.background_image
-
-        if fom_num == "Test":
+        if self.fom_num == "test":
             return figure_of_merit_f.Andor_FOM(self.image, self.fom_num)
-            #figure_of_merit_f.Andor_FOM(self.background_image, "Test")
-        elif fom_num == 1:
+        elif self.fom_num == 1:
             self.image = self.image * self.mask
-            #figure_of_merit_f.Andor_FOM(self.mask, "Test")
-            return figure_of_merit_f.Andor_FOM(self.image, fom_num)
-        elif fom_num == 2:
-            self.image = self.image * self.mask * self.gaussian_weight
-            #figure_of_merit_f.Andor_FOM(self.gaussian_weight, "Test")
-            return figure_of_merit_f.Andor_FOM(self.image, fom_num)
+            return figure_of_merit_f.Andor_FOM(self.image, self.fom_num)
+        elif self.fom_num == 2:
+            self.image = self.image * self.gaussian_mask
+            return figure_of_merit_f.Andor_FOM(self.image, self.fom_num)
 
     
     def __acquire(self):
@@ -691,7 +733,7 @@ class Test(object):
 
 if __name__ == "__main__":
     num_tests = 1   # the number of times to acquire data from the device
-    fom_num = "test"
+    fom_num = 2
     # determine which device to test
     print("Which device would you like to test?\nThe options are the following: \n", DAQ_DEVICES)
     print("Enter an index from 0 to ", len(DAQ_DEVICES)-1)
