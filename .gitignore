@@ -6,13 +6,6 @@ __pycache__/
 *.adf
 *.csv
 
-# Exclude everything in Andor/
-Andor/*
-
-# Include these files which would have been excluded
-!'Andor properties.ini'
-!Andor_python.py
-
 # Exclude any image files
 *.png
 *.jpg
