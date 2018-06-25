@@ -8,7 +8,7 @@ child() -- Creates a child from parents
 child_group() -- A container for multiple children
 """
 
-WAITING_TIME = 0.01 # seconds between writing to the mirror and starting the figure of merit function
+WAITING_TIME = 0.1 # seconds between writing to the mirror and starting the figure of merit function
 
 import numpy as np
 import math     # this library has math functions like sine and cosine
