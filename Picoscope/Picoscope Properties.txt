@@ -1,0 +1,36 @@
+Initialization properties for the Picoscope (note 1: the lines must be double spaced and have an information line at the beginning. The first variable must appear on line 2)
+channelA_coupling = DC    # Enter DC or AC coupling
+
+channelA_voltage_range = 2.0    # The voltage range is [-voltage_range, +voltage_range] (excluding offset)
+
+channelA_offset = 0.0    # This is an offset that the scope will add to your signal.
+
+channelA_enabled = True   # Enter "True" to turn this channel on
+
+channelA_bandwidth_limited = False    # Enter "True" to enable bandwidth limited signals
+
+channelB_coupling = DC    # Enter DC or AC coupling
+
+channelB_voltage_range = 10.0    # The voltage range is [-voltage_range, +voltage_range] (excluding offset)
+
+channelB_offset = 0.0    # This is an offset that the scope will add to your signal.
+
+channelB_enabled = True   # Enter "True" to turn this channel on
+
+channelB_bandwidth_limited = False    # Enter "True" to enable bandwidth limited signals
+
+trigger_channel = B    # Enter the channel you want to be the trigger (either "A" or "B")
+
+trigger_threshold = -4.0    # threshold in volts to activate trigger 
+
+trigger_direction = Falling    # Enter "Rising" or "Falling" for the trigger
+
+trigger_delay = 0    # number of clock cycles to wait from trigger conditions met until we actually trigger capture
+
+trigger_timeout = 100    # time to wait in mS for the trigger to occur. If no trigger occurs it gives up & auto-triggers.
+
+trigger_enabled = True    # Enter "True" to enable triggering
+
+signal_channel = A    # Enter the channel you want to be the signal (either "A" or "B")
+
+acquisition_window_duration = 1e-4    # Enter the duration of the signal acquisition window in seconds
