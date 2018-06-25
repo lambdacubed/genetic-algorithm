@@ -111,17 +111,16 @@ def NI_DAQ_FOM(voltage, fom_num):
     elif fom_num == 2:
     	return -voltage
     
-def Andor_FOM(image, fom_num = "Test", mu_x = None, mu_y = None):
+def Andor_FOM(image, fom_num):
     if fom_num == "test":   # if the daq device is being tested
         plt.imshow(image,cmap=plt.get_cmap('gray')) # plot the image
         plt.colorbar()
         plt.show()
         #plt.savefig('//Andor//test.png')
         return
-
+    
     if fom_num == 1 or fom_num == 2:
         total = np.sum(image)
+        print(total)
         fom = total
-        print(fom)
         return fom
-
