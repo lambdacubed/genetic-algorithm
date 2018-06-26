@@ -258,11 +258,33 @@ class Test_37(square_grid_mirror):
     def fits_mirror(self, genes):
         return True
 
-    def __array_conversion_PCI(self, genes):
-        return np.zeros(self.num_genes)
+    def array_conversion_PCI(self, genes):
+        """Maps genes to a different order so that indices in the genes array corresponds to the correct index of the mirror
 
-    def __array_conversion_USB(self, genes):
-        return np.zeros(self.num_genes)
+        Parameters
+        ----------
+        genes: genes, 1D numpy array
+            the genes or actuator voltages to be tested
+
+        Returns
+        -------
+        mapped_genes : mapped genes, 1D numpy array
+            The genes to be tested after being mapped so the index corresponds to the correct actuator
+        """
+        # Change the order of the genes so each index corresponds with the correct index on the deformable mirror
+        mapped_genes = np.array([genes[17], genes[31], genes[32], genes[8], genes[18], genes[9], genes[1], genes[16], genes[0], genes[23],
+                        genes[6], genes[21], genes[20], genes[19], genes[33], genes[22], genes[7], genes[10], genes[5], genes[29],
+                        genes[27], genes[26], genes[28], genes[14], genes[35], genes[24], genes[36], genes[34], genes[11], genes[3],
+                        genes[2], genes[15], genes[4], genes[25], genes[30], genes[13], genes[12]])
+        return mapped_genes
+
+    def array_conversion_USB(self, genes):
+
+        mapped_genes = np.array([genes[2], genes[9], genes[20], genes[12], genes[7], genes[19], genes[36], genes[21], genes[10], genes[8], 
+                                 genes[1], genes[27], genes[3], genes[13], genes[0], genes[35], genes[26], genes[25], genes[11], genes[18], 
+                                 genes[24], genes[23], genes[22], genes[34], genes[32], genes[15], genes[30], genes[31], genes[29], genes[16], 
+                                 genes[17], genes[33], genes[28], genes[14], genes[4], genes[5], genes[6]])
+        return mapped_genes
 
 if __name__ == "__main__":
     print('You meant to run GeneticAlgorithm.py')
