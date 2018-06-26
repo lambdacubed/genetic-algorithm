@@ -6,6 +6,18 @@ __pycache__/
 *.adf
 *.csv
 
+# Exclude not relevant things in Andor
+Andor/**/*.inf
+Andor/**/*.bas
+Andor/**/*.vb
+Andor/**/*.cat
+Andor/**/*.sys
+Andor/**/*.chm
+Andor/**/*.dat
+Andor/**/*.exe
+Andor/**/*.frm
+Andor/**/*.wcl
+
 # Exclude any image files
 *.png
 *.jpg
