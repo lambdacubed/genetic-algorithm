@@ -1,0 +1,11 @@
+Version 1.0 - 23rd Dec 2008
+
+*** IMAGEJ SIF READER INSTALLATION INSTRUCTIONS***
+
+1. Navigate to the ImageJ Program Folder (e.g. C:\Program Files\ImageJ) 
+
+2. Copy the contents of the ImageJSIFPlugin directory here.  (This will populate the folder structure accordingly).
+
+3. There should then be a ATSIFIO.DLL file in the program folder and an 'Andor' folder in the plugins directory with the following files in it (Read_SIF.java, Read_SIF.class, jna.jar, ATSIFIO.jar)
+
+4. Restart ImageJ and under the Plugin menu there will be an Andor folder with a Read SIF option.  
