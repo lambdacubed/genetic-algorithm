@@ -20,7 +20,7 @@ def send_file(mirror_comm_device, mirror):
 
         print('Please input the filename contained in the ', file_f.MIRROR_VOLTAGES_FOLDER, ' folder (include .adf):')
         filename = input()
-        saved_voltages = file_f.read_adf(filename, mirror.num_genes)   # read the saved voltages from the given file
+        saved_voltages = file_f.read_adf(filename, mirror.num_genes) +1.5  # read the saved voltages from the given file
         
         print('You are setting voltages for deformable mirror')
         print('Actuator voltages are: ', saved_voltages)   # show the operator what voltages they are sending to the mirror
@@ -74,7 +74,7 @@ def send_genes(mirror_comm_device, mirror):
 
 def test_actuators(mirror_comm_device, mirror):
     while True: # test actuators until done testing
-        test_voltages = np.zeros(mirror.num_genes) + 0    # initialize the array of test voltages to 0
+        test_voltages = np.zeros(mirror.num_genes)# + 71.5    # initialize the array of test voltages to 0
 
         while True: # create a while loop until the actuator to be tested is determined
             print("Which actuator would you like to test?\nEnter a integer from 0 to 36.")
@@ -89,7 +89,7 @@ def test_actuators(mirror_comm_device, mirror):
             print("What would you like the singular test actuator's voltage to be?")
             print("\tNote: The voltages for all of the other actuators will be 0")
             voltage = float(input())    # get the voltage from the operator
-            test_voltages[actuator_index] = voltage
+            test_voltages[actuator_index] = voltage + 1.5
             if mirror.fits_mirror(test_voltages):
                 break
             else:
