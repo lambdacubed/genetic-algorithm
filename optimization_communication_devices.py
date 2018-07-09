@@ -25,6 +25,7 @@ class PCI_DM_comm(object):
                                    [0x24, 0x5C, 0x58, 0x54, 0x20, 0x10, 0x08, 0x1C, 0x14, 0x0C, 0x04, 0x00, 0x3C, 0x38, 0x34, 0x30, 0x2C, 0x28]]
 
         self.voltage_multiplier = 2.625   # this is the constant used to multiply the genes to get the correct voltage output
+        self.waiting_time = 0.1 # seconds
 
         directory_path = os.path.dirname(os.path.abspath(__file__)) # get the current directory's path
 
@@ -50,8 +51,12 @@ class PCI_DM_comm(object):
         mirror : object from mirror_functions.py
             This contains the list of neighbors to make sure the genes don't break the mirror.
         """
-        if  mirror.fits_mirror(genes): # if the genes don't break the mirror
-            applied_voltages = genes * self.voltage_multiplier # multiply each gene by some mirror constant to get the voltages sent to the mirror
+        if mirror.zernike_polynomial_mode == True:
+            voltages = mirror.zernike_to_voltages(genes)
+        else:
+            voltages = genes
+        if  mirror.fits_mirror(voltages): # if the genes don't break the mirror
+            applied_voltages = voltages * self.voltage_multiplier # multiply each gene by some mirror constant to get the voltages sent to the mirror
             voltage_array = mirror.array_conversion_PCI(applied_voltages) # change the mapping of the indices
             self.__send_to_board(voltage_array[:19], voltage_array[19:])
         else:
@@ -113,6 +118,7 @@ class PCI_DM_comm(object):
 class USB_DM_comm(object):
     def __init__(self):
         self.voltage_multiplier = 13.72
+        self.waiting_time = 0.1 # seconds
 
         directory_path = os.path.dirname(os.path.abspath(__file__)) # get the current directory's path
 
@@ -129,8 +135,12 @@ class USB_DM_comm(object):
         mirror : object from mirror_functions.py
             This contains the list of neighbors to make sure the genes don't break the mirror.
         """
-        if mirror.fits_mirror(genes): # if the genes don't break the mirror
-            applied_voltages = genes * self.voltage_multiplier # multiply each gene by some mirror constant to get the voltages sent to the mirror
+        if mirror.zernike_polynomial_mode == True:
+            voltages = mirror.zernike_to_voltages(genes)
+        else:
+            voltages = genes
+        if mirror.fits_mirror(voltages): # if the genes don't break the mirror
+            applied_voltages = voltages * self.voltage_multiplier # multiply each gene by some mirror constant to get the voltages sent to the mirror
             voltage_array = mirror.array_conversion_USB(applied_voltages) # change the mapping of the indices
             self.__send_to_board(voltage_array)
         else:
@@ -153,6 +163,7 @@ class USB_DM_comm(object):
        
 class Test_comm(object):
     def __init__(self):
+        self.waiting_time = 0 # seconds
         return
 
     def write_to_mirror(self, genes, mirror):

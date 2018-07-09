@@ -7,17 +7,17 @@ Classes:
 actuator_array() -- This maps all of the neighboring actuator pairs (including diagonal actuators)
 and makes sure the voltage differences aren't too high
 """
-
+# TODO implement zernike polynomial stuff for each mirror
 import numpy as np
 import matplotlib.pyplot as plt
 
 OPT_DEVICES = ("37_square_grid_mirror_1", "37_square_grid_mirror_2", "37_mirror_test")
 
-def initialize_opt_device(which_opt_device):
+def initialize_opt_device(which_opt_device, zernike_polynomial_mode, radial_order):
     if which_opt_device == OPT_DEVICES[0]:
-        return XineticsDM37_1()
+        return XineticsDM37_1(zernike_polynomial_mode, radial_order)
     elif which_opt_device == OPT_DEVICES[1]:
-        return XineticsDM37_2()
+        return XineticsDM37_2(zernike_polynomial_mode, radial_order)
     elif which_opt_device == OPT_DEVICES[2]:
         return Mirror_test_37()
     else:
@@ -145,6 +145,74 @@ class square_grid_mirror(deformable_mirror):
                             voltages[index] = mirror[row_i][col_j]  # set the voltage value of the mirror to the voltage array
         return voltages
 
+    def generate_zernike_polynomial_matrix(self, radial_order, num_coefficients):
+        factorials = np.array([1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800])
+        rows = num_coefficients
+        columns = radial_order + 2
+        zernike_polynomial_matrix = np.zeros((rows, columns))
+        for n in range(radial_order+1):
+            zernike_polynomial_term = (int)((n*n + n)/2)
+            while (zernike_polynomial_term < (((n+1)*(n+1) + (n+1)) / 2)):
+                angular_order = (int)(2 * (zernike_polynomial_term-n) - n*n)
+                if (angular_order == 0):
+                    neumann_factor = 2
+                else:
+                    neumann_factor = 1
+                for j in range((int)((n-abs(angular_order))/2)+1):
+                	zernike_polynomial_matrix[zernike_polynomial_term][n-2*j] = ((pow(-1, j) * factorials[n - j] / (factorials[j]*factorials[(int)((n+angular_order)/2)-j]*factorials[(int)((n-angular_order)/2) - j])))
+                	#zernike_polynomial_matrix[zernike_polynomial_term][n-2*j] *= np.sqrt((2*n+2)/(neumann_factor*np.pi)) # normalize to create an orthonormal basis
+                zernike_polynomial_matrix[zernike_polynomial_term][columns-1] = angular_order
+                zernike_polynomial_term += 1
+        return zernike_polynomial_matrix
+
+        """
+    	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    	//		Example of zernike_polynomial_matrix with a radial order of 2 and not normalized															//
+    	//																																					//
+    	//		[ 1		0		0		0  ]	->	( 1*(r^0) + 0*(r^1) + 0*(r^2) )*cos(0*theta) = 1					<- 1st Zernike Polynomial term		//
+    	//		[ 0		1		0		-1 ]	->	( 0*(r^0) + 1*(r^1) + 0*(r^2) )*sin(1*theta) = r*sin(theta)			<- 2nd Zernike Polynomial term		//
+    	//		[ 0		1		0		1  ]	->	( 0*(r^0) + 1*(r^1) + 0*(r^2) )*cos(1*theta) = r*cos(theta)			<- 3rd Zernike Polynomial term		//
+    	//		[ 0		0		1		-2 ]	->	( 0*(r^0) + 0*(r^1) + 1*(r^2) )*sin(2*theta) = r^2*sin(2*theta)		<- 4th Zernike Polynomial term		//
+    	//		[-1		0		2		0  ]	->	( -1*(r^0)+ 0*(r^1) + 2*(r^2) )*cos(0*theta) = 2*r^2 - 1			<- 5th Zernike Polynomial term		//
+    	//		[ 0		0		1		2  ]	->	( 0*(r^0) + 0*(r^1) + 1*(r^2) )*cos(2*theta) = r^2*cos(2*theta)		<- 6th Zernike Polynomial term		//
+    	//		  ^		^		^		^																													//
+    	//		r^0	   r^1     r^2	angular order																											//
+    	//																																					//
+    	//		Note: For angular orders, a negative value corresponds to sine() positve value corresponds to cosine()										//
+    	//																																					//
+    	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    	"""
+
+    def generate_xy_to_radiustheta(self, dm_array):
+        cartesian_to_theta_matrix = np.zeros_like(dm_array, dtype='float')
+        cartesian_to_radius_matrix = np.zeros_like(dm_array, dtype = 'float')
+        for row_i in range(len(dm_array)):
+        	for col_j in range(len(dm_array[row_i])):   
+        		if dm_array[row_i][col_j] != -1:     # make sure the index at (i,j) is represents a real actuator
+        			cartesian_to_theta_matrix[row_i][col_j] = math.atan2(CENTER_PIXEL - row_i, col_j - CENTER_PIXEL)   # 3 is the center pixel
+        			cartesian_to_radius_matrix[row_i][col_j] = math.sqrt((CENTER_PIXEL-col_j)*(CENTER_PIXEL-col_j) + (CENTER_PIXEL-row_i)*(CENTER_PIXEL-row_i))/RADIUS	# sqrt(10) is the greatest radial distance, so I'm normalizing r:[0,1]
+        return cartesian_to_radius_matrix, cartesian_to_theta_matrix        
+
+
+    def generate_zernike_look_up_table(self, dm_array, num_coefficients, cartesian_to_radius_matrix, cartesian_to_theta_matrix):
+        zernike_look_up_table = np.zeros((len(dm_array), len(dm_array[0]), num_coefficients))
+        for row_i in range(len(dm_array)):
+            for col_j in range(len(dm_array[row_i])):   
+                if dm_array[row_i][col_j] != -1:     # make sure the index at (i,j) is represents a real actuator
+                    for zernike_polynomial_term in range(num_coefficients):
+                        value = 0.0
+                        for x in range(zernike_polynomial_matrix.shape[1] - 1):
+                        	if (zernike_polynomial_matrix[zernike_polynomial_term][x] != 0):
+                        		value += zernike_polynomial_matrix[zernike_polynomial_term][x] * pow(cartesian_to_radius_matrix[row_i][col_j],x)
+                        	if ( x == (zernike_polynomial_matrix.shape[1]-2)):
+                        		x += 1
+                        		if (zernike_polynomial_matrix[zernike_polynomial_term][x] < 0):
+                        			value *= math.sin(-1 * zernike_polynomial_matrix[zernike_polynomial_term][x] * cartesian_to_theta_matrix[row_i][col_j])
+                        		elif (zernike_polynomial_matrix[zernike_polynomial_term][x] > 0):
+                        			value *= math.cos(zernike_polynomial_matrix[zernike_polynomial_term][x] * cartesian_to_theta_matrix[row_i][col_j])
+                        	zernike_look_up_table[row_i][col_j][zernike_polynomial_term] = value
+        return zernike_look_up_table
+    
 class XineticsDM37_1(square_grid_mirror):
     """actuator_array is an object that represents deformable mirror actuators and checks
     whether the actuator voltage values break the mirror or not
@@ -154,10 +222,15 @@ class XineticsDM37_1(square_grid_mirror):
     dm_actuator_neighbors: deformable mirror actuator neighbors, numpy array
         The array contains all of the pairs of actuators which neighbor each other (including diagonal)
     """
-    def __init__(self):
+    def __init__(self, zernike_polynomial_mode, radial_order):
         self.max_difference =  30 # maximum difference in voltage between neighboring actuators
         self.max_voltage = 100 # maximumm voltage an acuator can have
         self.min_voltage = 0
+
+        self.max_mutation = 15
+        self.zernike_polynomial_mode = zernike_polynomial_mode
+        self.radial_order = radial_order
+        self.num_zernike_coefficients = ((radial_order+1)*(radial_order+1) + (radial_order+1))/2
 
         # array that represents the indices of acuators on the deformable mirror
         # Note: if you change to a different mirror, you will have to make a new class with a different dm_array grid
@@ -176,6 +249,11 @@ class XineticsDM37_1(square_grid_mirror):
         # make the neighbor list an accessible attribute of the object actuator_array
         self.dm_actuator_neighbors = self.actuator_neighbors(self.dm_array)  # make the neighbors list an attribute
 
+        if self.zernike_polynomial_mode == True:
+            self.num_genes = self.num_zernike_coefficients
+            zern_polynomial_matrix = self.generate_zernike_polynomial_matrix(radial_order, self.num_zernike_coefficients)
+            xy_to_radius, xy_to_theta = self.generate_xy_to_radiustheta(dm_array)
+            self.zernike_look_up_table = self.generate_zernike_look_up_table(self.dm_array, self.num_zernike_coefficients, xy_to_radius, xy_to_theta)
 
     def fits_object(self, genes):
         """Determine if a person breaks the mirror
@@ -190,6 +268,8 @@ class XineticsDM37_1(square_grid_mirror):
         valid_genes : valid genes, bool
             True if the genes do not break the mirror
         """
+        if self.zernike_polynomial_mode == True:
+            genes = self.zernike_to_voltages(genes)
         return self.is_mirror_safe(genes, self.max_voltage, self.min_voltage, self.dm_actuator_neighbors, self.max_difference)
 
 
@@ -220,6 +300,22 @@ class XineticsDM37_1(square_grid_mirror):
     #                              genes[24], genes[23], genes[22], genes[34], genes[32], genes[15], genes[30], genes[31], genes[29], genes[16], 
     #                              genes[17], genes[33], genes[28], genes[14], genes[4], genes[5], genes[6]])
     #     return mapped_genes
+
+    
+    def zernike_to_mirror(self, zernike_coefficients):
+        mirror = np.zeros_like(self.dm_array, dtype='float')
+        for row_i in range(len(self.dm_array)):
+        	for col_j in range(len(self.dm_array[row_i])):   
+        		if self.dm_array[row_i][col_j] != -1:     # make sure the index at (i,j) is represents a real actuator
+        			sum = 0.0
+        			for coef_term in range(zernike_coefficients.size):
+        				sum += self.zernike_look_up_table[row_i][col_j][coef_term] * zernike_coefficients[coef_term]
+        			mirror[row_i][col_j] = sum
+        return mirror
+
+    def zernike_to_voltages(zernike_coefficients):
+        mirror = self.zernike_to_mirror(zernike_coefficients)
+        return self.mirror_to_voltages(mirror)
 
     def mirror_to_voltages_array(self, mirror):
         return self.mirror_to_voltages(mirror, self.dm_array)
@@ -239,10 +335,15 @@ class XineticsDM37_2(square_grid_mirror):
     dm_actuator_neighbors: deformable mirror actuator neighbors, numpy array
         The array contains all of the pairs of actuators which neighbor each other (including diagonal)
     """
-    def __init__(self):
+    def __init__(self, zernike_polynomial_mode, radial_order):
         self.max_difference =  30 # maximum difference in voltage between neighboring actuators
         self.max_voltage = 100 # maximumm voltage an acuator can have
         self.min_voltage = 0
+
+        self.max_mutation = 15
+        self.zernike_polynomial_mode = zernike_polynomial_mode
+        self.radial_order = radial_order
+        self.num_zernike_coefficients = ((radial_order+1)*(radial_order+1) + (radial_order+1))/2
 
         # array that represents the indices of acuators on the deformable mirror
         # Note: if you change to a different mirror, you will have to make a new class with a different dm_array grid
@@ -261,6 +362,13 @@ class XineticsDM37_2(square_grid_mirror):
         # make the neighbor list an accessible attribute of the object actuator_array
         self.dm_actuator_neighbors = self.actuator_neighbors(self.dm_array)  # make the neighbors list an attribute
 
+        if self.zernike_polynomial_mode == True:
+            self.num_genes = self.num_zernike_coefficients
+            zern_polynomial_matrix = self.generate_zernike_polynomial_matrix(radial_order, self.num_zernike_coefficients)
+            xy_to_radius, xy_to_theta = self.generate_xy_to_radiustheta(dm_array)
+            self.zernike_look_up_table = self.generate_zernike_look_up_table(self.dm_array, self.num_zernike_coefficients, xy_to_radius, xy_to_theta)
+
+
 
     def fits_object(self, genes):
         """Determine if a person breaks the mirror
@@ -275,6 +383,8 @@ class XineticsDM37_2(square_grid_mirror):
         valid_genes : valid genes, bool
             True if the genes do not break the mirror
         """
+        if self.zernike_polynomial_mode == True:
+            genes = self.zernike_to_voltages(genes)
         return self.is_mirror_safe(genes, self.max_voltage, self.min_voltage, self.dm_actuator_neighbors, self.max_difference)
 
 
@@ -305,6 +415,21 @@ class XineticsDM37_2(square_grid_mirror):
     #                              genes[24], genes[23], genes[22], genes[34], genes[32], genes[15], genes[30], genes[31], genes[29], genes[16], 
     #                              genes[17], genes[33], genes[28], genes[14], genes[4], genes[5], genes[6]])
     #     return mapped_genes
+
+    def zernike_to_mirror(self, zernike_coefficients):
+        mirror = np.zeros_like(self.dm_array, dtype='float')
+        for row_i in range(len(self.dm_array)):
+        	for col_j in range(len(self.dm_array[row_i])):   
+        		if self.dm_array[row_i][col_j] != -1:     # make sure the index at (i,j) is represents a real actuator
+        			sum = 0.0
+        			for coef_term in range(zernike_coefficients.size):
+        				sum += self.zernike_look_up_table[row_i][col_j][coef_term] * zernike_coefficients[coef_term]
+        			mirror[row_i][col_j] = sum
+        return mirror
+
+    def zernike_to_voltages(zernike_coefficients):
+        mirror = self.zernike_to_mirror(zernike_coefficients)
+        return self.mirror_to_voltages(mirror)
 
     def mirror_to_voltages_array(self, mirror):
         return self.mirror_to_voltages(mirror, self.dm_array)

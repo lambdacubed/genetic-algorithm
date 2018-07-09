@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import data_acquisition_devices as daq_devices
 import optimization_communication_devices as opt_com_devices
 
-
+# TODO change reading/writing files for optimization devices at the end
 def save_different_directory(different_directory):
     print("Would you like to save to a different directory? Enter 'y' or 'n'")
     while True:
@@ -55,7 +55,7 @@ def genetic_algorithm():
     print('You are running the genetic algorithm')
     
     #This function sets all of the values of the number of parents, children, and mutation amount
-    num_init_parents, num_init_children, init_voltage, filename, num_parents, num_children, mutation_percentage, data_acquisition_device, mirror_communication_device, fom_num, deformable_mirror = initialization_f.initialize()
+    num_init_parents, num_init_children, init_voltage, filename, num_parents, num_children, mutation_percentage, data_acquisition_device, mirror_communication_device, fom_num, deformable_mirror, zernike_polynomial_mode, radial_order = initialization_f.initialize()
     """Note: To change the default values, go into genetic_algorithm.ini"""
     
     print('\nNOTE: LabView must be open in order to run the program\n')
@@ -72,16 +72,16 @@ def genetic_algorithm():
     		break   # break out of the infinite loop
     
     
-    print('Starting...')
-    start_time = time.time()    # determine the time when the algorithm starts
-    opt_device = optimization_devices.initialize_opt_device(deformable_mirror) # initialize the class to determine if actuator voltages break the mirror or not
+    opt_device = optimization_devices.initialize_opt_device(deformable_mirror, zernike_polynomial_mode, radial_order) # initialize the class to determine if actuator voltages break the mirror or not
     daq_device = daq_devices.initialize_daq_device(data_acquisition_device, fom_num)	# open and initialize the data acquisition device being used
     opt_comm_device = opt_com_devices.initialize_comm_device(mirror_communication_device)
+
+    print('Starting...')
+    start_time = time.time()    # determine the time when the algorithm starts
+
     iteration_number = 0
     
-    num_genes = opt_device.num_genes
-    print((num_genes), 'type num genes')
-    parents = people.parent_group(num_init_parents, num_genes, init_voltage, filename)    # create parents from above constraints
+    parents = people.parent_group(num_init_parents, opt_device, init_voltage, filename)    # create parents from above constraints
     children = people.child_group(num_init_children, parents, opt_device)       # create children from the given parents
     children.mutate(mutation_percentage, opt_device)    # mutate the children
     
@@ -114,7 +114,7 @@ def genetic_algorithm():
         		print('\nThis is the current number of parents: ', num_parents)
         		num_parents = initialization_f.change_value('float', 0, num_children+1) # change the number of parents to what the user wants
 
-        parents = people.parent_group(num_parents,num_genes, None, None, all_people)   # create parents from the best performing children
+        parents = people.parent_group(num_parents, opt_device, None, None, all_people)   # create parents from the best performing children
         children = people.child_group(num_children, parents, opt_device)       # create children from the just created parents
         children.mutate(mutation_percentage, opt_device)    # mutate the children
         

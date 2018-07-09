@@ -8,7 +8,7 @@ import csv
 import numpy as np
 import time
 import os
-
+# get rid of write/read adf
 MIRROR_GRAPH_FOLDER = '\saved_mirror_graphs\\'    # directory for mirror graphs
 MIRROR_VOLTAGES_FOLDER       = '\saved_mirrors\\'     # directory for mirror actuator files
 

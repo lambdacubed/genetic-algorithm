@@ -137,11 +137,15 @@ def initialize():
 
     data_acquisition_device = initialization_variables[7]
 
-    mirror_communication_device = initialization_variables[8]
+    optimization_communication_device = initialization_variables[8]
 
     fom_num = int(initialization_variables[9])
 
-    deformable_mirror = initialization_variables[10]
+    optimization_device = initialization_variables[10]
+
+    zernike_polynomial_mode = initialization_variables[11]
+
+    radial_order = initialization_variables[12]
 
     if not (init_voltage is None) and not (filename is None):
         print('Error: You have both an initial voltage and a filename to read from')
@@ -158,6 +162,8 @@ def initialize():
     print('\tMirror communication device: ', mirror_communication_device, '\n')
     print('\tDeformable mirror: ', deformable_mirror, '\n')
     print('\tFigure of merit calculation number: ', fom_num, '\n')
+    print('\tZernike polynomial mode: ', zernike_polynomial_mode, '\n')
+    print('\tMaximum radial order of Zernike polynomials used: ', radial_order, '\n')
     print('Would you like to change any of these values?\nEnter "y" or "n"')
     print('Note: the locations of all important variables are in the README.txt file')
     keyboard_input = input()    # get input from the user
@@ -173,6 +179,8 @@ def initialize():
             print('To change the mirror communication device, enter "comm"')
             print('To change the deformable mirror, enter "mirror"')
             print('To change the figure of merit calculation number, enter "fom"')
+            print('To change the zernike polynomial mode, enter "zernike"')
+            print('To change the radial order, enter "order"')
             print('To change nothing, enter "none"')
             key_input = input() # get input from the user
             if key_input == 'initial parents':  # determine what the user input
@@ -217,9 +225,20 @@ def initialize():
                 fom_num = change_value('int')   # change the variable's value
                 if not change_others(): # determine if the user wants to change any other parameters
                     break
+            elif key_input == 'zernike':   # determine what the user input
+                print('You are changing the zernike polynomial mode')
+                print('The options are "True" or "False"')
+                fom_num = (change_value('string') == "True")  # change the variable's value
+                if not change_others(): # determine if the user wants to change any other parameters
+                    break
             elif key_input == 'mirror':   # determine what the user input
                 print('You are changing the deformable mirror')
                 deformable_mirror = change_value('string')   # change the variable's value
+                if not change_others(): # determine if the user wants to change any other parameters
+                    break
+            elif key_input == 'order':   # determine what the user input
+                print('You are changing the radial order')
+                deformable_mirror = change_value('int', 0, 6)   # change the variable's value
                 if not change_others(): # determine if the user wants to change any other parameters
                     break
             elif key_input == 'init setting':   # determine what the user input
@@ -251,7 +270,7 @@ def initialize():
                 break
             else:
                 print('You did not enter a valid command')
-    return num_init_parents, num_init_children, init_voltage, filename, num_parents, num_children, mutation_percentage, data_acquisition_device, mirror_communication_device, fom_num, deformable_mirror
+    return num_init_parents, num_init_children, init_voltage, filename, num_parents, num_children, mutation_percentage, data_acquisition_device, optimization_communication_device, fom_num, optimization_device, zernike_polynomial_mode, radial_order
 
 if __name__ == "__main__":
     print('You meant to run GeneticAlgorithm.py')
