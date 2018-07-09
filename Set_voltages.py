@@ -10,8 +10,8 @@ test_actuators -- test the voltages for individual actuators
 import numpy as np  # general useful python library
 
 import file_functions as file_f     # used to read from files
-import mirror_communication_devices as mirror_devices
-import mirrors
+import optimization_communication_devices as opt_com_devices
+import optimization_devices
 
 def send_file(mirror_comm_device, mirror):
     """ This sets voltages on the mirror from a file of actuator voltages
@@ -117,29 +117,29 @@ def test_actuators(mirror_comm_device, mirror):
     
 if __name__ == "__main__":
 
-    print('\nThese are the mirrors you can send voltages to: ')
-    print(mirrors.MIRRORS)
+    print('\nThese are the optimization devices you can send voltages to (only send voltages to mirrors): ')
+    print(optimization_devices.opt_devices)
     print("Please enter the index of the device you would like to use.")
-    print("Indices go from 0 to", len(mirrors.MIRRORS)-1)
+    print("Indices go from 0 to", len(optimization_devices.opt_devices)-1)
     while True:
         index = int(input())
-        if ((index <= len(mirrors.MIRRORS)-1) and (index >= 0)):
-            print("Using", mirrors.MIRRORS[index])
-            mirror = mirrors.initialize_mirror(mirrors.MIRRORS[index])
+        if ((index <= len(optimization_devices.opt_devices)-1) and (index >= 0)):
+            print("Using", optimization_devices.opt_devices[index])
+            mirror = optimization_devices.initialize_mirror(optimization_devices.opt_devices[index])
             break
         else:
             print("You didn't enter a correct index.")
 
 
     print('\nThese are the available devices to send voltages to the mirror: ')
-    print(mirror_devices.DEVICES)
+    print(opt_com_devices.DEVICES)
     print("Please enter the index of the device you would like to use.")
-    print("Indices go from 0 to", len(mirror_devices.DEVICES)-1)
+    print("Indices go from 0 to", len(opt_com_devices.DEVICES)-1)
     while True:
         index = int(input())
-        if ((index <= len(mirror_devices.DEVICES)-1) and (index >= 0)):
-            print("Using", mirror_devices.DEVICES[index])
-            mirror_comm_device = mirror_devices.initialize_comm_device(mirror_devices.DEVICES[index])
+        if ((index <= len(opt_com_devices.DEVICES)-1) and (index >= 0)):
+            print("Using", opt_com_devices.DEVICES[index])
+            mirror_comm_device = opt_com_devices.initialize_comm_device(opt_com_devices.DEVICES[index])
             break
         else:
             print("You didn't enter a correct index.")

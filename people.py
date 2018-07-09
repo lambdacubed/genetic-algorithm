@@ -127,7 +127,7 @@ class child(person):
 			for j in range(self.num_genes):     # for each of the child's genes
 				random_parent = np.random.randint(0,parent_group.num_parents)   # choose a random parent to inherit from
 				self.genes[j] = parent_group.parents[random_parent].genes[j]    # inherit the jth gene from this random parent
-			if mirror.fits_mirror(self.genes):     # check if the child breaks the mirror
+			if mirror.fits_object(self.genes):     # check if the child breaks the mirror
 				break       # if the child doesn't break the mirror, leave the while loop
 			'''else:    # if the genes broke the mirror
 				print('broken inherited genes')'''
@@ -156,7 +156,7 @@ class child(person):
 						new_genes[j] = new_gene  # pass on the new gene
 						mutation_vector = np.append(mutation_vector, mutation_amount[j])      # remember the amount of mutation for that gene
 				# Note: if one of the if statement conditions isn't met, the original gene is kept
-			if mirror.fits_mirror(new_genes):    # determine whether this child is safe for the mirror
+			if mirror.fits_object(new_genes):    # determine whether this child is safe for the mirror
 				if mutation_vector.size:    # if there were any mutations
 					self.amount_mutated = np.mean(mutation_vector)     # store the amount this gene was mutated by
 				self.genes = new_genes      # the child's new genes are the successfully mutated genes

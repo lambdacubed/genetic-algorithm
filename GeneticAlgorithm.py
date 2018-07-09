@@ -5,7 +5,7 @@ genetic_algorithm() -- Start, run, and end the genetic algorithm.
 """
 import people
 import msvcrt
-import mirrors
+import optimization_devices
 import file_functions as file_f
 import numpy as np
 import initialization_functions as initialization_f
@@ -15,7 +15,7 @@ import warnings
 import os
 import matplotlib.pyplot as plt
 import data_acquisition_devices as daq_devices
-import mirror_communication_devices as mirror_devices
+import optimization_communication_devices as opt_com_devices
 
 
 def save_different_directory(different_directory):
@@ -74,19 +74,19 @@ def genetic_algorithm():
     
     print('Starting...')
     start_time = time.time()    # determine the time when the algorithm starts
-    mirror = mirrors.initialize_mirror(deformable_mirror) # initialize the class to determine if actuator voltages break the mirror or not
+    opt_device = optimization_devices.initialize_opt_device(deformable_mirror) # initialize the class to determine if actuator voltages break the mirror or not
     daq_device = daq_devices.initialize_daq_device(data_acquisition_device, fom_num)	# open and initialize the data acquisition device being used
-    mirror_comm_device = mirror_devices.initialize_comm_device(mirror_communication_device)
+    opt_comm_device = opt_com_devices.initialize_comm_device(mirror_communication_device)
     iteration_number = 0
     
-    num_genes = mirror.num_genes
+    num_genes = opt_device.num_genes
     print((num_genes), 'type num genes')
     parents = people.parent_group(num_init_parents, num_genes, init_voltage, filename)    # create parents from above constraints
-    children = people.child_group(num_init_children, parents, mirror)       # create children from the given parents
-    children.mutate(mutation_percentage, mirror)    # mutate the children
+    children = people.child_group(num_init_children, parents, opt_device)       # create children from the given parents
+    children.mutate(mutation_percentage, opt_device)    # mutate the children
     
     all_people = people.person_group(parents, children)     # combine all of the children and parents into a single container
-    all_people.test_and_sort_people(mirror, daq_device, mirror_comm_device)   # measure the figures of merits and sort the people so the highest figure of merit is 0th indexed
+    all_people.test_and_sort_people(opt_device, daq_device, opt_comm_device)   # measure the figures of merits and sort the people so the highest figure of merit is 0th indexed
     
     best_person = all_people.people[0]  # the best person is the 0th indexed person in all_people
     print('best_person\n', best_person.figure_of_merit) # show the best person's genes and figure of merit
@@ -115,11 +115,11 @@ def genetic_algorithm():
         		num_parents = initialization_f.change_value('float', 0, num_children+1) # change the number of parents to what the user wants
 
         parents = people.parent_group(num_parents,num_genes, None, None, all_people)   # create parents from the best performing children
-        children = people.child_group(num_children, parents, mirror)       # create children from the just created parents
-        children.mutate(mutation_percentage, mirror)    # mutate the children
+        children = people.child_group(num_children, parents, opt_device)       # create children from the just created parents
+        children.mutate(mutation_percentage, opt_device)    # mutate the children
         
         all_people = people.person_group(parents, children)     # combine all of the children and parents into a single container
-        all_people.test_and_sort_people(mirror, daq_device, mirror_comm_device)   # measure the figures of merits and sort the people so the highest figure of merit is 0th indexed
+        all_people.test_and_sort_people(opt_device, daq_device, opt_comm_device)   # measure the figures of merits and sort the people so the highest figure of merit is 0th indexed
         
         new_best_person = all_people.people[0]  # the best person is the 0th indexed person in all_people
 
@@ -129,7 +129,7 @@ def genetic_algorithm():
         	best_person = new_best_person   # if the new best person is better, they are the overall best person ever
         print('best_person\n', best_person.figure_of_merit) # print out the best person ever made
 
-        plot_f.plot_mirror(new_best_person.genes, best_person.genes, mirror, iteration_number)
+        plot_f.plot_mirror(new_best_person.genes, best_person.genes, opt_device, iteration_number)
 
         figures_of_merit = np.concatenate((past_figures_of_merit, all_people.best_figures_of_merit(num_parents)), axis=1)   # concatenate the previous figure of merit matrix with the current figures of merit
         iteration_number, past_figures_of_merit = plot_f.plot_performance(iteration_number, figures_of_merit)   # plot the progressions of figures of merit
@@ -198,7 +198,7 @@ if __name__ == "__main__":
     
     #dm = mirror_f.actuator_array()
     #print(len(dm.dm_actuator_neighbors))
-    # help("mirrors")
+    # help("optimization_devices")
 
     
     #device = data_acq_f.data_acqusition("Andor")	# open and initialize the data acquisition device being used
