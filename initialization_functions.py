@@ -143,9 +143,9 @@ def initialize():
 
     optimization_device = initialization_variables[10]
 
-    zernike_polynomial_mode = initialization_variables[11]
+    zernike_polynomial_mode = initialization_variables[11] == "True"
 
-    radial_order = initialization_variables[12]
+    radial_order = int(initialization_variables[12])
 
     if not (init_voltage is None) and not (filename is None):
         print('Error: You have both an initial voltage and a filename to read from')
@@ -159,8 +159,8 @@ def initialize():
     print('\tInitial voltage of starting parent: ', init_voltage, '\n')
     print('\tMutation percentage: ', mutation_percentage, '\n')
     print('\tData acquisition device: ', data_acquisition_device, '\n')
-    print('\tMirror communication device: ', mirror_communication_device, '\n')
-    print('\tDeformable mirror: ', deformable_mirror, '\n')
+    print('\tMirror communication device: ', optimization_communication_device, '\n')
+    print('\tDeformable mirror: ', optimization_device, '\n')
     print('\tFigure of merit calculation number: ', fom_num, '\n')
     print('\tZernike polynomial mode: ', zernike_polynomial_mode, '\n')
     print('\tMaximum radial order of Zernike polynomials used: ', radial_order, '\n')
@@ -217,7 +217,7 @@ def initialize():
             elif key_input == 'comm':   # determine what the user input
                 print('You are changing the mirror communication device')
                 print('The options are "PCI", "USB", or "Test"')
-                mirror_communication_device = change_value('string')   # change the variable's value
+                optimization_communication_device = change_value('string')   # change the variable's value
                 if not change_others(): # determine if the user wants to change any other parameters
                     break
             elif key_input == 'fom':   # determine what the user input
@@ -228,17 +228,17 @@ def initialize():
             elif key_input == 'zernike':   # determine what the user input
                 print('You are changing the zernike polynomial mode')
                 print('The options are "True" or "False"')
-                fom_num = (change_value('string') == "True")  # change the variable's value
+                zernike_polynomial_mode = (change_value('string') == "True")  # change the variable's value
                 if not change_others(): # determine if the user wants to change any other parameters
                     break
             elif key_input == 'mirror':   # determine what the user input
                 print('You are changing the deformable mirror')
-                deformable_mirror = change_value('string')   # change the variable's value
+                optimization_device = change_value('string')   # change the variable's value
                 if not change_others(): # determine if the user wants to change any other parameters
                     break
             elif key_input == 'order':   # determine what the user input
                 print('You are changing the radial order')
-                deformable_mirror = change_value('int', 0, 6)   # change the variable's value
+                radial_order = change_value('int', 0, 6)   # change the variable's value
                 if not change_others(): # determine if the user wants to change any other parameters
                     break
             elif key_input == 'init setting':   # determine what the user input

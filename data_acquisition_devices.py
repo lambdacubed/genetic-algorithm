@@ -14,14 +14,14 @@ import file_functions as file_f     # use this for reading and writing to files
 import os   # this gives information about the current working directory
 
 # These libraries are needed for IC cameras
-from pyicic.IC_ImagingControl import *
-import copy
-
-# This is needed for the NI DAQ
-import win32com.client  # Python ActiveX Client for calling and running LabVIEW
-
-# this is needed for the picoscope
-from picoscope import ps2000a
+#from pyicic.IC_ImagingControl import *
+#import copy
+#
+## This is needed for the NI DAQ
+#import win32com.client  # Python ActiveX Client for calling and running LabVIEW
+#
+## this is needed for the picoscope
+#from picoscope import ps2000a
 
 # These libraries are needed for the Andor camera
 import ctypes   # this is used for being a wrapper to the c functions in the Andor dll

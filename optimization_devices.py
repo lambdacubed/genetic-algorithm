@@ -10,6 +10,7 @@ and makes sure the voltage differences aren't too high
 # TODO implement zernike polynomial stuff for each mirror
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 
 OPT_DEVICES = ("37_square_grid_mirror_1", "37_square_grid_mirror_2", "37_mirror_test")
 
@@ -97,7 +98,7 @@ class square_grid_mirror(deformable_mirror):
         plt.imshow(mirror)  # plot it
         plt.show()
     
-    def voltages_to_mirror(self, voltages, dm_array):
+    def voltages_to_mirror_array(self, voltages, dm_array):
         """Converts a numpy array of voltages to a 2d numpy array of which has the voltages at the correct indices of the DM
         
         Parameters
@@ -122,7 +123,7 @@ class square_grid_mirror(deformable_mirror):
                             mirror[row_i][col_j] = voltages[index]  # set the mirror voltage equal to the voltage array index
         return mirror
 
-    def mirror_to_voltages(self, mirror, dm_array):
+    def mirror_to_voltages_array(self, mirror, dm_array):
         """Converts a 2d numpy array of which has the voltages at the correct indices of the DM to a list of voltages
         
         Parameters
@@ -186,15 +187,17 @@ class square_grid_mirror(deformable_mirror):
     def generate_xy_to_radiustheta(self, dm_array):
         cartesian_to_theta_matrix = np.zeros_like(dm_array, dtype='float')
         cartesian_to_radius_matrix = np.zeros_like(dm_array, dtype = 'float')
+        center_index = (len(dm_array)-1)/2
+        radius = math.sqrt(center_index**2 + (center_index/2)**2)
         for row_i in range(len(dm_array)):
         	for col_j in range(len(dm_array[row_i])):   
         		if dm_array[row_i][col_j] != -1:     # make sure the index at (i,j) is represents a real actuator
-        			cartesian_to_theta_matrix[row_i][col_j] = math.atan2(CENTER_PIXEL - row_i, col_j - CENTER_PIXEL)   # 3 is the center pixel
-        			cartesian_to_radius_matrix[row_i][col_j] = math.sqrt((CENTER_PIXEL-col_j)*(CENTER_PIXEL-col_j) + (CENTER_PIXEL-row_i)*(CENTER_PIXEL-row_i))/RADIUS	# sqrt(10) is the greatest radial distance, so I'm normalizing r:[0,1]
+        			cartesian_to_theta_matrix[row_i][col_j] = math.atan2(center_index - row_i, col_j - center_index)   # 3 is the center pixel
+        			cartesian_to_radius_matrix[row_i][col_j] = math.sqrt((center_index-col_j)*(center_index-col_j) + (center_index-row_i)*(center_index-row_i))/radius	# sqrt(10) is the greatest radial distance, so I'm normalizing r:[0,1]
         return cartesian_to_radius_matrix, cartesian_to_theta_matrix        
 
 
-    def generate_zernike_look_up_table(self, dm_array, num_coefficients, cartesian_to_radius_matrix, cartesian_to_theta_matrix):
+    def generate_zernike_look_up_table(self, dm_array, num_coefficients, zernike_polynomial_matrix, cartesian_to_radius_matrix, cartesian_to_theta_matrix):
         zernike_look_up_table = np.zeros((len(dm_array), len(dm_array[0]), num_coefficients))
         for row_i in range(len(dm_array)):
             for col_j in range(len(dm_array[row_i])):   
@@ -230,7 +233,7 @@ class XineticsDM37_1(square_grid_mirror):
         self.max_mutation = 15
         self.zernike_polynomial_mode = zernike_polynomial_mode
         self.radial_order = radial_order
-        self.num_zernike_coefficients = ((radial_order+1)*(radial_order+1) + (radial_order+1))/2
+        self.num_zernike_coefficients = int(((radial_order+1)*(radial_order+1) + (radial_order+1))/2)
 
         # array that represents the indices of acuators on the deformable mirror
         # Note: if you change to a different mirror, you will have to make a new class with a different dm_array grid
@@ -253,7 +256,7 @@ class XineticsDM37_1(square_grid_mirror):
             self.num_genes = self.num_zernike_coefficients
             zern_polynomial_matrix = self.generate_zernike_polynomial_matrix(radial_order, self.num_zernike_coefficients)
             xy_to_radius, xy_to_theta = self.generate_xy_to_radiustheta(dm_array)
-            self.zernike_look_up_table = self.generate_zernike_look_up_table(self.dm_array, self.num_zernike_coefficients, xy_to_radius, xy_to_theta)
+            self.zernike_look_up_table = self.generate_zernike_look_up_table(self.dm_array, self.num_zernike_coefficients, zern_polynomial_matrix, xy_to_radius, xy_to_theta)
 
     def fits_object(self, genes):
         """Determine if a person breaks the mirror
@@ -313,15 +316,15 @@ class XineticsDM37_1(square_grid_mirror):
         			mirror[row_i][col_j] = sum
         return mirror
 
-    def zernike_to_voltages(zernike_coefficients):
+    def zernike_to_voltages(self, zernike_coefficients):
         mirror = self.zernike_to_mirror(zernike_coefficients)
         return self.mirror_to_voltages(mirror)
 
-    def mirror_to_voltages_array(self, mirror):
-        return self.mirror_to_voltages(mirror, self.dm_array)
+    def mirror_to_voltages(self, mirror):
+        return self.mirror_to_voltages_array(mirror, self.dm_array)
 
-    def voltages_to_mirror_array(self, voltages):
-        return self.voltages_to_mirror(voltages, self.dm_array)
+    def voltages_to_mirror(self, voltages):
+        return self.voltages_to_mirror_array(voltages, self.dm_array)
 
     def plot_voltages(self, voltages):
         self.plot_voltage_array(voltages, dm_array)
@@ -343,7 +346,7 @@ class XineticsDM37_2(square_grid_mirror):
         self.max_mutation = 15
         self.zernike_polynomial_mode = zernike_polynomial_mode
         self.radial_order = radial_order
-        self.num_zernike_coefficients = ((radial_order+1)*(radial_order+1) + (radial_order+1))/2
+        self.num_zernike_coefficients = int(((radial_order+1)*(radial_order+1) + (radial_order+1))/2)
 
         # array that represents the indices of acuators on the deformable mirror
         # Note: if you change to a different mirror, you will have to make a new class with a different dm_array grid
@@ -366,7 +369,7 @@ class XineticsDM37_2(square_grid_mirror):
             self.num_genes = self.num_zernike_coefficients
             zern_polynomial_matrix = self.generate_zernike_polynomial_matrix(radial_order, self.num_zernike_coefficients)
             xy_to_radius, xy_to_theta = self.generate_xy_to_radiustheta(dm_array)
-            self.zernike_look_up_table = self.generate_zernike_look_up_table(self.dm_array, self.num_zernike_coefficients, xy_to_radius, xy_to_theta)
+            self.zernike_look_up_table = self.generate_zernike_look_up_table(self.dm_array, self.num_zernike_coefficients, zern_polynomial_matrix, xy_to_radius, xy_to_theta)
 
 
 
@@ -427,15 +430,15 @@ class XineticsDM37_2(square_grid_mirror):
         			mirror[row_i][col_j] = sum
         return mirror
 
-    def zernike_to_voltages(zernike_coefficients):
+    def zernike_to_voltages(self, zernike_coefficients):
         mirror = self.zernike_to_mirror(zernike_coefficients)
         return self.mirror_to_voltages(mirror)
 
-    def mirror_to_voltages_array(self, mirror):
-        return self.mirror_to_voltages(mirror, self.dm_array)
+    def mirror_to_voltages(self, mirror):
+        return self.mirror_to_voltages_array(mirror, self.dm_array)
 
-    def voltages_to_mirror_array(self, voltages):
-        return self.voltages_to_mirror(voltages, self.dm_array)
+    def voltages_to_mirror(self, voltages):
+        return self.voltages_to_mirror_array(voltages, self.dm_array)
 
     def plot_voltages(self, voltages):
         self.plot_voltage_array(voltages, dm_array)
