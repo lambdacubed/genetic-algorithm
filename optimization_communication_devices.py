@@ -41,7 +41,7 @@ class PCI_DM_comm(object):
         self.pci4VI.setcontrolvalue('addresses', self.ACTUATOR_ADDRESSES[1])   # set addresses
 
 
-    def write_to_mirror(self, genes, mirror):
+    def write_to_object(self, genes, mirror):
         """Checks whether the voltage values satisfy the requirements then sends them to the deformable mirror
 
         Parameters
@@ -126,7 +126,7 @@ class USB_DM_comm(object):
         self.usbVI = LabVIEW.getvireference(directory_path + '\\Volt_to_mirror_2.vi')    # path to the LabVIEW VI for the first board
         self.usbVI._FlagAsMethod("Call")    # Flag "Call" as the method to run the VI in this path
 
-    def write_to_mirror(self, genes, mirror):
+    def write_to_object(self, genes, mirror):
         """Checks whether the voltage values satisfy the requirements then sends them to the deformable mirror
         Parameters
         ----------
@@ -166,7 +166,7 @@ class Test_comm(object):
         self.waiting_time = 0 # seconds
         return
 
-    def write_to_mirror(self, genes, mirror):
+    def write_to_object(self, genes, mirror):
         return
 
 if __name__ == "__main__":

@@ -6,10 +6,7 @@ plot_performance() -- plots the figures of merit of the given people
 
 import numpy as np  # general useful python library
 import matplotlib.pyplot as plt # plotting library
-import scipy.interpolate as interpolate
-from scipy.interpolate import interp2d
-from scipy.interpolate import griddata
-
+# TODO make this a part of people and get rid of plot_functions
 def plot_performance(iteration_number, figures_of_merit):
     """plot the figures of merit for the current generation with the previous generations
 
@@ -45,42 +42,3 @@ def plot_performance(iteration_number, figures_of_merit):
     return iteration_number, figures_of_merit
 
 
-def plot_mirror(genes, best_genes, mirror, iteration_number):
-    fig = plt.figure(2)   # set the figure to be plotting to
-    plt.clf()   # clear plot so it can be plotted again
-    if iteration_number == 0:
-        plt.ion()   # enable interactive mode so we can continuously draw on the graph
-        plt.show()  # show the plot window
-    mirror_array = mirror.voltages_to_mirror(genes)
-    best_mirror_array = mirror.voltages_to_mirror(best_genes)
-
-    current_x_spacing = np.linspace(0,6,7)  # TODO get this from mirror
-    current_y_spacing = np.linspace(0,6,7)
-    X, Y = np.meshgrid(current_x_spacing, current_y_spacing)
-
-    mask = np.where(~np.isnan(mirror_array), True, False)
-
-    X_masked = X[mask]
-    Y_masked = Y[mask]
-    mirror_array_masked = mirror_array[mask]
-    best_mirror_array_masked = best_mirror_array[mask]
-
-    new_x_spacing = np.linspace(0,6,40)
-    new_y_spacing = np.linspace(0,6,40)
-    new_X, new_Y = np.meshgrid(new_x_spacing, new_y_spacing)
-
-    interp_mirror = interpolate.griddata((X_masked, Y_masked), mirror_array_masked, (new_x_spacing[None,:], new_y_spacing[:,None]), method='cubic')
-    interp_best_mirror = interpolate.griddata((X_masked, Y_masked), best_mirror_array_masked, (new_x_spacing[None,:], new_y_spacing[:,None]), method='cubic')
-
-    plt.subplot(121)
-    plt.title('Current best mirror')
-    plt.imshow(interp_mirror,cmap=plt.get_cmap('plasma'))
-    plt.colorbar()
-
-    plt.subplot(122)
-    plt.title('Overall best mirror')
-    plt.imshow(interp_best_mirror,cmap=plt.get_cmap('plasma'))
-    plt.colorbar()
-
-    plt.draw()  # draw these things on the graph
-    plt.pause(.001)     # pause the program so the plot can be updated

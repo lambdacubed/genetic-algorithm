@@ -8,6 +8,9 @@ initialize() -- This function contains all default values and defines all initia
 
 import msvcrt
 import file_functions as file_f
+import optimization_devices
+import optimization_communication_devices as opt_com_devices
+import data_acquisition_devices as daq_devices
 
 INITIALIZATION_FILE = "\\genetic_algorithm.ini"
 
@@ -29,49 +32,53 @@ def change_value(datatype, lowerbound = None, upperbound = None):
         The new value the user input to have the value changed to
     """
     while True: # create infinite loop
-        print('What would you like to change it to?')
-        if datatype == 'string':    # if the variable to be changed is a string
-            new_value = input()    # get the new value of the variable from the user
-            print('Is this input okay: ', new_value, ' (Enter y or n)')
-            good = input()  # get input from the user
-            if good == 'y': # if the input was good
-                break   # exit the while loop
-        if datatype == 'int':   # if the variable to be changed is an int
-            new_value = int(input())    # get the new value of the variable from the user
-            if not(lowerbound is None) and not(upperbound is None):     # if both upper and lower bounds were given
-                if (new_value <= lowerbound) or (new_value >= upperbound):  # check if this value is within the given bounds
-                    print('Error: You entered a value that is not within (', lowerbound, ', ', upperbound, ')')
-                    break
-            elif not(lowerbound is None):   # if no upper bound was given 
-                if (new_value <= lowerbound):   # check if the value is too low
-                    print('Error: You entered a value that is lower than or equal to ', lowerbound)
-                    break            
-            elif not(upperbound is None):   # if no lower bound was given 
-                if (new_value <= lowerbound) or (new_value >= upperbound):  # check if the value is too high
-                    print('Error: You entered a value that is higher than or equal to ',upperbound)
-                    break
-            print('Is this input okay: ', new_value, ' (Enter y or n)')
-            good = input()  # get input from the user
-            if good == 'y': # if the input was good
+        while True:
+            print('What would you like to change it to?')
+            if datatype == 'string':    # if the variable to be changed is a string
+                new_value = input()    # get the new value of the variable from the user
                 break
-        if datatype == 'float': # if the variable to be changed is a float
-            new_value = float(input())  # get the new value of the variable from the user
-            if not(lowerbound is None) and not(upperbound is None): # if both upper and lower bounds were given
-                if (new_value <= lowerbound) or (new_value >= upperbound):  # check if this value is within the given bounds
-                    print('Error: You entered a value that is not within (', lowerbound, ', ', upperbound, ')')
+            if datatype == 'int':   # if the variable to be changed is an int
+                new_value = int(input())    # get the new value of the variable from the user
+                if not(lowerbound is None) and not(upperbound is None):     # if both upper and lower bounds were given
+                    if (new_value <= lowerbound) or (new_value >= upperbound):  # check if this value is within the given bounds
+                        print('Error: You entered a value that is not within (', lowerbound, ', ', upperbound, ')')
+                    else:
+                        break
+                elif not(lowerbound is None):   # if no upper bound was given 
+                    if (new_value <= lowerbound):   # check if the value is too low
+                        print('Error: You entered a value that is lower than or equal to ', lowerbound)
+                    else:
+                        break
+                elif not(upperbound is None):   # if no lower bound was given 
+                    if (new_value <= lowerbound) or (new_value >= upperbound):  # check if the value is too high
+                        print('Error: You entered a value that is higher than or equal to ',upperbound)
+                    else:
+                        break
+                else:
                     break
-            elif not(lowerbound is None):   # if no upper bound was given
-                if (new_value <= lowerbound):   # check if the input value is too low
-                    print('Error: You entered a value that is lower than or equal to ', lowerbound)
+            if datatype == 'float': # if the variable to be changed is a float
+                new_value = float(input())  # get the new value of the variable from the user
+                if not(lowerbound is None) and not(upperbound is None): # if both upper and lower bounds were given
+                    if (new_value <= lowerbound) or (new_value >= upperbound):  # check if this value is within the given bounds
+                        print('Error: You entered a value that is not within (', lowerbound, ', ', upperbound, ')')
+                    else:
+                        break
+                elif not(lowerbound is None):   # if no upper bound was given
+                    if (new_value <= lowerbound):   # check if the input value is too low
+                        print('Error: You entered a value that is lower than or equal to ', lowerbound)
+                    else:
+                        break
+                elif not(upperbound is None):   # if no lower bound was given, check if the value is too high
+                    if (new_value >= upperbound):   # check if the input value is too high
+                        print('Error: You entered a value that is higher than or equal to ',upperbound)
+                    else:
+                        break
+                else:
                     break
-            elif not(upperbound is None):   # if no lower bound was given, check if the value is too high
-                if (new_value >= upperbound):   # check if the input value is too high
-                    print('Error: You entered a value that is higher than or equal to ',upperbound)
-                    break
-            print('Is this input okay: ', new_value, ' (Enter y or n)')
-            good = input()  # get input from the user
-            if good == 'y': # if the input was good
-                break
+        print('Is this input okay: ', new_value, ' (Enter y or n)')
+        good = input()  # get input from the user
+        if good == 'y': # if the input was good
+            break
     return new_value
 
 def change_others():
@@ -104,7 +111,7 @@ def initialize():
         This is the number of children to make from the first parent(s).
     init_voltage : intial voltage, float
         When starting, the parent(s) genes will either all be an initial voltage or loaded from a file.
-    filename : name of a .adf file, string
+    filename : name of a previous genes file, string
         When starting, the parent(s) genes will either be read from 'filename' or all be the intial voltage.
     num_parents : number of parents, int
         The number of parents to be used after the first iteration.
@@ -159,8 +166,8 @@ def initialize():
     print('\tInitial voltage of starting parent: ', init_voltage, '\n')
     print('\tMutation percentage: ', mutation_percentage, '\n')
     print('\tData acquisition device: ', data_acquisition_device, '\n')
-    print('\tMirror communication device: ', optimization_communication_device, '\n')
-    print('\tDeformable mirror: ', optimization_device, '\n')
+    print('\tOptimization communication device: ', optimization_communication_device, '\n')
+    print('\tOptimization device: ', optimization_device, '\n')
     print('\tFigure of merit calculation number: ', fom_num, '\n')
     print('\tZernike polynomial mode: ', zernike_polynomial_mode, '\n')
     print('\tMaximum radial order of Zernike polynomials used: ', radial_order, '\n')
@@ -176,8 +183,8 @@ def initialize():
             print('To change the mutation percentage, enter "mutation percentage"')
             print('To change the filename or initial voltage, enter "init setting"')
             print('To change the data acquisition device, enter "daq"')
-            print('To change the mirror communication device, enter "comm"')
-            print('To change the deformable mirror, enter "mirror"')
+            print('To change the optimization communication device, enter "opt_comm"')
+            print('To change the optimization device, enter "opt"')
             print('To change the figure of merit calculation number, enter "fom"')
             print('To change the zernike polynomial mode, enter "zernike"')
             print('To change the radial order, enter "order"')
@@ -205,18 +212,18 @@ def initialize():
                     break
             elif key_input == 'mutation percentage':   # determine what the user input
                 print('You are changing the mutation percentage')
-                mutation_percentage = change_value('int', 0, 30)   # change the variable's value
+                mutation_percentage = change_value('int', 0, 101)   # change the variable's value
                 if not change_others(): # determine if the user wants to change any other parameters
                     break
             elif key_input == 'daq':   # determine what the user input
                 print('You are changing the data acquisition device')
-                print('The options are "Andor", "NI_DAQ", "Picoscope", "IC", or "Test"')
+                print('The options are ' + str(daq_devices.DAQ_DEVICES))
                 data_acquisition_device = change_value('string')   # change the variable's value
                 if not change_others(): # determine if the user wants to change any other parameters
                     break
-            elif key_input == 'comm':   # determine what the user input
-                print('You are changing the mirror communication device')
-                print('The options are "PCI", "USB", or "Test"')
+            elif key_input == 'opt_comm':   # determine what the user input
+                print('You are changing the optimization communication device')
+                print('The options are ' + str(opt_com_devices.DEVICES))
                 optimization_communication_device = change_value('string')   # change the variable's value
                 if not change_others(): # determine if the user wants to change any other parameters
                     break
@@ -231,14 +238,15 @@ def initialize():
                 zernike_polynomial_mode = (change_value('string') == "True")  # change the variable's value
                 if not change_others(): # determine if the user wants to change any other parameters
                     break
-            elif key_input == 'mirror':   # determine what the user input
-                print('You are changing the deformable mirror')
+            elif key_input == 'opt':   # determine what the user input
+                print('You are changing the optimization device')
+                print("The options are " + str(optimization_devices.OPT_DEVICES))
                 optimization_device = change_value('string')   # change the variable's value
                 if not change_others(): # determine if the user wants to change any other parameters
                     break
             elif key_input == 'order':   # determine what the user input
                 print('You are changing the radial order')
-                radial_order = change_value('int', 0, 6)   # change the variable's value
+                radial_order = change_value('int', 0, 9)   # change the variable's value
                 if not change_others(): # determine if the user wants to change any other parameters
                     break
             elif key_input == 'init setting':   # determine what the user input
@@ -248,7 +256,7 @@ def initialize():
                 keyboard_press = input()    # get input from the user
                 if keyboard_press == 'filename':    # determine what the user input
                     print('You are changing the filename')
-                    print('When entering filenames, enter the name without the .adf extension')
+                    print('When entering filenames, enter the name without the file extension')
                     print('Note: The file must be in the saved_mirrors directory for the program to be able to read it')
                     filename = change_value('string')   # change the variable's value
                     init_voltage = None # set init_voltage to none because only one initialization setting can be defined at one time

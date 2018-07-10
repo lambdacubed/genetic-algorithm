@@ -8,7 +8,6 @@ child() -- Creates a child from parents
 child_group() -- A container for multiple children
 """
 
-
 import numpy as np
 import math     # this library has math functions like sine and cosine
 import time     # used to make the program sleep for a few seconds
@@ -46,7 +45,7 @@ class person(object):
 		figure_of_merit : figure of merit, float
 			The figure of merit of this specific person.
 		"""
-		opt_comm_device.write_to_mirror(self.genes, opt_device)       # write the genes to the opt_device
+		opt_comm_device.write_to_object(self.genes, opt_device)       # write the genes to the opt_device
 		time.sleep(opt_comm_device.waiting_time)    # wait for the given amount of time
 		self.figure_of_merit = daq_device.figure_of_merit()  # measure and calculate the figure of merit
 		return self.figure_of_merit # return the measured figure of merit
@@ -102,8 +101,7 @@ class parent_group(object):
 		elif not (init_voltage is None):    # if an initial voltage is given
 			self.parents = np.full((num_parents),parent(opt_device, init_voltage),parent,'C')    # create an array of parents where every gene is the initial voltage
 		elif not (filename is None):    # if a filename to read from was given
-            # TODO change to opt_device.read_file
-			file_genes = file_f.read_adf(filename, opt_device.num_genes)  # read the genes from a file
+			file_genes = opt_device.read_genes(filename, opt_device.num_genes)  # read the genes from a file
 			self.parents = np.full((num_parents),parent(opt_device, None, file_genes),parent,'C')    # create an array of parents from the file genes
 		else:
 			print("Error: parents weren't given enough initialization information")   # the correct output arguments weren't given

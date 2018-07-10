@@ -18,7 +18,8 @@ import data_acquisition_devices as daq_devices
 import optimization_communication_devices as opt_com_devices
 
 # TODO change reading/writing files for optimization devices at the end
-def save_different_directory(different_directory):
+def save_different_directory(default_directory):
+    print("The default directory is " + default_directory)
     print("Would you like to save to a different directory? Enter 'y' or 'n'")
     while True:
         different = input()
@@ -27,14 +28,12 @@ def save_different_directory(different_directory):
                 print('Enter another directory (make sure to have a \ at the end)')
                 different_directory = input()
                 if os.path.exists(different_directory):
-                    break
+                    return different_directory
                 print("That directory doesn't exist. Enter another.")
-            break
         elif different == 'n':
-            break
+            return default_directory
         else:
             print('You did not enter a y or n')
-    return different_directory
 
 def anything_else():    # determine if the user wants to save anything else from the algorithm
 	while True:
@@ -46,7 +45,24 @@ def anything_else():    # determine if the user wants to save anything else from
 	return doing_more
 
 def genetic_algorithm():
-    
+    """
+    Summary line.
+
+    Extended description of function.
+
+    Parameters
+    ----------
+    arg1 : int
+        Description of arg1
+    arg2 : str
+        Description of arg2
+
+    Returns
+    -------
+    int
+        Description of return value
+
+    """
     
     warnings.filterwarnings("ignore",".*GUI is implemented.*")  # filter out the plotting warning about deprecation
     
@@ -129,7 +145,7 @@ def genetic_algorithm():
         	best_person = new_best_person   # if the new best person is better, they are the overall best person ever
         print('best_person\n', best_person.figure_of_merit) # print out the best person ever made
 
-        plot_f.plot_mirror(new_best_person.genes, best_person.genes, opt_device, iteration_number)
+        opt_device.plot_object(new_best_person.genes, best_person.genes, iteration_number)
 
         figures_of_merit = np.concatenate((past_figures_of_merit, all_people.best_figures_of_merit(num_parents)), axis=1)   # concatenate the previous figure of merit matrix with the current figures of merit
         iteration_number, past_figures_of_merit = plot_f.plot_performance(iteration_number, figures_of_merit)   # plot the progressions of figures of merit
@@ -142,54 +158,58 @@ def genetic_algorithm():
     while True:     # create an infinite loop
         print("\nFor writing the best person's actuator voltages to a file, input 'write'")
         print('For saving graph data, input "graph"')
-        print("For saving the best person's mirror (as an adf file) from each iteration, input 'all_best'")
+        print("For saving the best person from each iteration, input 'all_best'")
         print("For saving everything, input 'everything'")
         print('For doing nothing, input "none"')
         saving_option = input() # get user input for what they want to do
         directory_path = os.path.dirname(os.path.abspath(__file__)) # get the current directory's path
         if saving_option == 'write':    # if they want to write the genes to a file
-            print("The default directory is " + directory_path + file_f.MIRROR_VOLTAGES_FOLDER)
-            directory_path = save_different_directory(directory_path + file_f.MIRROR_VOLTAGES_FOLDER)
-            print("Enter the file name you want to be saved (include the .adf extension):\nNote: this will overwrite a file with the same name")
+            directory_path = save_different_directory(opt_device.default_directory)
+            print("Enter the file name you want to be saved (do not include the file extension):\nNote: this will overwrite a file with the same name")
             filename = input()  # get user input from for what filename they want
-            file_f.write_adf(best_person, directory_path + filename)    # write the genes to the input file
+            opt_device.write_genes(best_person.genes, directory_path + filename)    # write the genes to the input file
             if anything_else() == 'n':   # if they don't want to do anything else
                 break   # break out of the while loop
         elif saving_option == 'graph':  # if the user wants to save the graph
-            print("The default directory is " + directory_path + file_f.MIRROR_GRAPH_FOLDER)
-            directory_path = save_different_directory(directory_path + file_f.MIRROR_GRAPH_FOLDER)
-            print("Enter the file name you want to be saved (for test.csv & test.pdf, input test):\nNote: This saves a .csv of graph's values and a pdf of the python figure\nAlso, this will overwrite a file with the same name")
+            directory_path = save_different_directory(directory_path + file_f.FOM_GRAPH_FOLDER)
+            print("Enter the file name you want to be saved without the file extension (for test.csv & test.pdf, input test):\nNote: This saves a .csv of graph's values and a pdf of the python figure\nAlso, this will overwrite a file with the same name")
             filename = input()  # get user input from for what filename they want
             file_f.write_figures_of_merit(figures_of_merit, directory_path + filename)   # write the figures of merit to a comma separated value file
             plt.savefig( directory_path +'%s.pdf' %  filename, dpi = 300, bbox_inches = 'tight')
             if anything_else() == 'n':   # if they don't want to do anything else
                 break   # break out of the while loop
         elif saving_option == 'all_best':
-            print("The default directory is " + directory_path + file_f.MIRROR_GRAPH_FOLDER)
-            directory_path = save_different_directory(directory_path + file_f.MIRROR_GRAPH_FOLDER)
-            print("Enter the folder you want the best people to be saved into (to have everything saved in a folder named 'test', input 'test'.:\nNote: this will overwrite a folder with the same name\nNote:It will save each person according to its iteration number. \nThe first person will be saved as '0.adf', and the ith person will be saved as 'i.adf'")
+            directory_path = save_different_directory(opt_device.default_directory)
+            print("Enter the folder you want the best people to be saved into (to have everything saved in a folder named 'test', input 'test'.:\nNote: this will overwrite a folder with the same name\nNote: It will save each person according to its iteration number. The ith person will be saved as 'i.[file_extension]'")
             folder = input()
+            new_dir_path = directory_path + "\\" + folder + "\\" 
+            if not os.path.exists(new_dir_path):
+                os.makedirs(new_dir_path)
             for i in range(best_people.size):
-                file_f.write_adf(best_people[i], directory_path + "\\" + folder + "\\" + str(i))
+                opt_device.write_genes(best_people[i].genes, new_dir_path + str(i))
             if anything_else() == 'n':   # if they don't want to do anything else
                 break   # break out of the while loop
         elif saving_option == 'everything':
-            print("The directory it is saving into is" + directory_path)
-            print("It saves in " + file_f.MIRROR_GRAPH_FOLDER + " and " + file_f.MIRROR_VOLTAGES_FOLDER)
-            print("Enter the file name you want for all of these files (for 'test.adf', 'test.csv', 'test.pdf', and so on, input 'test'.\tNote: All of the types of files will have the same name")
+            print("The directory it is saving into is " + directory_path + file_f.FOM_GRAPH_FOLDER + " and " + opt_device.default_directory)
+            print("Enter the file name you want for all of these files (for 'test.csv', 'test.pdf', etc., input 'test'.\tNote: this will overwrite a file with the same name")
             filename = input()
-            file_f.write_adf(best_person, directory_path + file_f.MIRROR_VOLTAGES_FOLDER + filename + '.adf')    # write the genes to the input file
-            file_f.write_figures_of_merit(figures_of_merit, directory_path + file_f.MIRROR_GRAPH_FOLDER + filename)   # write the figures of merit to a comma separated value file
-            plt.savefig( directory_path + file_f.MIRROR_GRAPH_FOLDER +'%s.pdf' %  filename, dpi = 300, bbox_inches = 'tight')
+            opt_device.write_genes(best_person.genes, opt_device.default_directory + filename)    # write the genes to the input file
+            file_f.write_figures_of_merit(figures_of_merit, directory_path + file_f.FOM_GRAPH_FOLDER + filename)   # write the figures of merit to a comma separated value file
+            plt.savefig( directory_path + file_f.FOM_GRAPH_FOLDER +'%s.pdf' %  filename, dpi = 300, bbox_inches = 'tight')
+            new_dir_path = opt_device.default_directory + "\\" + filename + "\\" 
+            if not os.path.exists(new_dir_path):
+                os.makedirs(new_dir_path)
             for i in range(best_people.size):
-                file_f.write_adf(best_people[i], directory_path + file_f.MIRROR_GRAPH_FOLDER + "\\" + folder + "\\" + str(i))
+                opt_device.write_genes(best_people[i].genes, new_dir_path + str(i))
+            if anything_else() == 'n':   # if they don't want to do anything else
+                break   # break out of the while loop
         elif saving_option == 'none':   # if the user doesn't want to do anything with the data
             break   # break out of the while loop
         else:   # if they didn't enter one of the options
             print("You didn't enter a correct command")
 
 # If this function is being run explicitly, I want the genetic algorithm funciton to be run.
-# Otherwise, do not run the main function and so it only has the import functionality
+# Otherwise, do not run the genetic_algorithm function and so it only has the import functionality
 if __name__ == "__main__":
     genetic_algorithm()
     

@@ -7,10 +7,17 @@ Classes:
 actuator_array() -- This maps all of the neighboring actuator pairs (including diagonal actuators)
 and makes sure the voltage differences aren't too high
 """
-# TODO implement zernike polynomial stuff for each mirror
+
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.interpolate as interpolate
 import math
+import os
+import csv
+import time
+
+MIRROR_VOLTAGES_FOLDER = '\saved_mirrors\\'     # directory for mirror actuator files
+MIRROR_ZERNIKE_FOLDER = '\saved_zernike_coefficients\\'
 
 OPT_DEVICES = ("37_square_grid_mirror_1", "37_square_grid_mirror_2", "37_mirror_test")
 
@@ -35,7 +42,6 @@ class deformable_mirror(object):
 
 
     def is_mirror_safe(self, genes, max_voltage, min_voltage, actuator_neighbors, max_difference):
-
         valid_genes = True    # the child is good until proven bad
         for i in range(len(actuator_neighbors)):      # Test every actuator value with its neighbors' values
             valid_genes = valid_genes and (abs(genes[actuator_neighbors[i][0]]-genes[actuator_neighbors[i][1]]) <= max_difference)  # test voltage difference between neighboring actuators is less than 30
@@ -48,45 +54,68 @@ class deformable_mirror(object):
 
 
 class square_grid_mirror(deformable_mirror):
-    def actuator_neighbors(self, dm_array):
+    def __init__(self, dm_array, zernike_polynomial_mode, radial_order):
+        self.dm_array = dm_array
+        self.numpy_dm_array = np.array(dm_array)
+        self.num_genes = np.sum(self.numpy_dm_array >= 0)
+        directory_path = os.path.dirname(os.path.abspath(__file__)) # get the current directory's path
+        self.default_directory = directory_path + MIRROR_VOLTAGES_FOLDER
+
+        # make the neighbor list an accessible attribute of the object actuator_array
+        self.dm_actuator_neighbors = self.actuator_neighbors()  # make the neighbors list an attribute
+
+        self.zernike_polynomial_mode = zernike_polynomial_mode
+        self.radial_order = radial_order
+        self.num_zernike_coefficients = int(((radial_order+1)*(radial_order+1) + (radial_order+1))/2)
+
+        if self.zernike_polynomial_mode == True:
+            self.num_genes = self.num_zernike_coefficients
+            zern_polynomial_matrix = self.generate_zernike_polynomial_matrix(radial_order, self.num_zernike_coefficients)
+            xy_to_radius, xy_to_theta = self.generate_xy_to_radiustheta()
+            self.zernike_look_up_table = self.generate_zernike_look_up_table(self.num_zernike_coefficients, zern_polynomial_matrix, xy_to_radius, xy_to_theta)
+            self.default_directory = directory_path + MIRROR_ZERNIKE_FOLDER
+
+    def actuator_neighbors(self):
         dm_actuator_neighbors = []      # initialize the empty list of neighboring actuators
 
-        # The nested for loops go through the entire array and determine which actuators 
-        # are neighbors. It includes actuators which are diagonal to each other.
-        # It starts at the top left and makes sure the actuator distance from 
-        # the center is within the area of the active actuators. It then pairs the 
-        # given actuator with the actuators to the east, southeast, south, and 
-        # southwest of the starting actuator. It iterates through the entire array
-        # logging the neighbor pairs of each actuator. 
-        for row_i in range(len(dm_array)):
-            for col_j in range(len(dm_array[row_i])):   
-                if dm_array[row_i][col_j] != -1:     # make sure the index at (i,j) is represents a real actuator
-                    start_actuator = dm_array[row_i][col_j]     # this will be the actuator examined in the for loop
+        """
+        The nested for loops go through the entire array and determine which actuators 
+        are neighbors. It includes actuators which are diagonal to each other.
+        It starts at the top left and makes sure the actuator distance from 
+        the center is within the area of the active actuators. It then pairs the 
+        given actuator with the actuators to the east, southeast, south, and 
+        southwest of the starting actuator. It iterates through the entire array
+        logging the neighbor pairs of each actuator. 
+        """
+        for row_i in range(len(self.dm_array)):
+            for col_j in range(len(self.dm_array[row_i])):   
+                if self.dm_array[row_i][col_j] != -1:     # make sure the index at (i,j) is represents a real actuator
+                    start_actuator = self.dm_array[row_i][col_j]     # this will be the actuator examined in the for loop
                     # if j is not in the last column and the east neighbor isn't -1, add these neighbors to the list 
-                    if col_j !=len(dm_array[row_i])-1:
-                        neighbor = dm_array[row_i][col_j+1]
+                    if col_j !=len(self.dm_array[row_i])-1:
+                        neighbor = self.dm_array[row_i][col_j+1]
                         if neighbor != -1:
                             dm_actuator_neighbors.append([start_actuator,neighbor])
                     # if row_i is not the last row, the south/southeast/southwest neighbors may be valid
-                    if row_i!=len(dm_array)-1:
+                    if row_i!=len(self.dm_array)-1:
                         # determine if the southern neighbor is valid
-                        neighbor = dm_array[row_i+1][col_j]
+                        neighbor = self.dm_array[row_i+1][col_j]
                         if neighbor != -1:  
                             dm_actuator_neighbors.append([start_actuator,neighbor])
                         # if col_j is not the last column, determine if the southeastern neighbor is valid
-                        if col_j != len(dm_array[row_i])-1:
-                            neighbor = dm_array[row_i+1][col_j+1]
+                        if col_j != len(self.dm_array[row_i])-1:
+                            neighbor = self.dm_array[row_i+1][col_j+1]
                             if neighbor != -1:
                                 dm_actuator_neighbors.append([start_actuator,neighbor])
                         # if col_j is not the first column, determine if the southwestern neighbor is valid
                         if col_j!=0:
-                            neighbor = dm_array[row_i+1][col_j-1]
+                            neighbor = self.dm_array[row_i+1][col_j-1]
                             if neighbor != -1:
                                 dm_actuator_neighbors.append([start_actuator,neighbor])
 
         return dm_actuator_neighbors
 
-    def plot_voltage_array(self, voltages, dm_array):
+    def plot_voltage(self, voltages):
         """Plots what a set of voltages look like on the mirror
         
         Parameters
@@ -94,11 +123,11 @@ class square_grid_mirror(deformable_mirror):
         voltages : voltages, numpy array
             This is an array of voltages sen to the mirror in the same form as voltage genes
         """
-        mirror = self.voltages_to_mirror(voltages, dm_array)  # convert the voltages to a 2d array which looks like the mirror
+        mirror = self.voltages_to_mirror(voltages, self.dm_array)  # convert the voltages to a 2d array which looks like the mirror
         plt.imshow(mirror)  # plot it
         plt.show()
     
-    def voltages_to_mirror_array(self, voltages, dm_array):
+    def voltages_to_mirror(self, voltages):
         """Converts a numpy array of voltages to a 2d numpy array of which has the voltages at the correct indices of the DM
         
         Parameters
@@ -116,14 +145,14 @@ class square_grid_mirror(deformable_mirror):
         mirror[:] = np.nan
         # loop through each of the voltage indices and each of the mirror indices
         for index in range(voltages.size):
-            for row_i in range(len(dm_array)):
-                for col_j in range(len(dm_array[row_i])):   
-                    if dm_array[row_i][col_j] != -1:     # make sure the index at (i,j) is represents a real actuator
-                        if (dm_array[row_i][col_j] == index):  # if the mirror index is the same as the voltage index
+            for row_i in range(len(self.dm_array)):
+                for col_j in range(len(self.dm_array[row_i])):   
+                    if self.dm_array[row_i][col_j] != -1:     # make sure the index at (i,j) is represents a real actuator
+                        if (self.dm_array[row_i][col_j] == index):  # if the mirror index is the same as the voltage index
                             mirror[row_i][col_j] = voltages[index]  # set the mirror voltage equal to the voltage array index
         return mirror
 
-    def mirror_to_voltages_array(self, mirror, dm_array):
+    def mirror_to_voltages(self, mirror):
         """Converts a 2d numpy array of which has the voltages at the correct indices of the DM to a list of voltages
         
         Parameters
@@ -139,10 +168,10 @@ class square_grid_mirror(deformable_mirror):
         voltages = np.empty(37, 'float', 'C')   # initialize voltage array
         # loop through each of the voltage indices and each of the mirror indices
         for index in range(voltages.size):
-            for row_i in range(len(dm_array)):
-                for col_j in range(len(dm_array[row_i])):   
-                    if dm_array[row_i][col_j] != -1:     # make sure the index at (i,j) is represents a real actuator
-                        if (dm_array[row_i][col_j] == index):  # if the mirror index is the same as the voltage index
+            for row_i in range(len(self.dm_array)):
+                for col_j in range(len(self.dm_array[row_i])):   
+                    if self.dm_array[row_i][col_j] != -1:     # make sure the index at (i,j) is represents a real actuator
+                        if (self.dm_array[row_i][col_j] == index):  # if the mirror index is the same as the voltage index
                             voltages[index] = mirror[row_i][col_j]  # set the voltage value of the mirror to the voltage array
         return voltages
 
@@ -184,24 +213,24 @@ class square_grid_mirror(deformable_mirror):
     	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     	"""
 
-    def generate_xy_to_radiustheta(self, dm_array):
-        cartesian_to_theta_matrix = np.zeros_like(dm_array, dtype='float')
-        cartesian_to_radius_matrix = np.zeros_like(dm_array, dtype = 'float')
-        center_index = (len(dm_array)-1)/2
+    def generate_xy_to_radiustheta(self):
+        cartesian_to_theta_matrix = np.zeros_like(self.dm_array, dtype='float')
+        cartesian_to_radius_matrix = np.zeros_like(self.dm_array, dtype = 'float')
+        center_index = (len(self.dm_array)-1)/2
         radius = math.sqrt(center_index**2 + (center_index/2)**2)
-        for row_i in range(len(dm_array)):
-        	for col_j in range(len(dm_array[row_i])):   
-        		if dm_array[row_i][col_j] != -1:     # make sure the index at (i,j) is represents a real actuator
+        for row_i in range(len(self.dm_array)):
+        	for col_j in range(len(self.dm_array[row_i])):   
+        		if self.dm_array[row_i][col_j] != -1:     # make sure the index at (i,j) is represents a real actuator
         			cartesian_to_theta_matrix[row_i][col_j] = math.atan2(center_index - row_i, col_j - center_index)   # 3 is the center pixel
         			cartesian_to_radius_matrix[row_i][col_j] = math.sqrt((center_index-col_j)*(center_index-col_j) + (center_index-row_i)*(center_index-row_i))/radius	# sqrt(10) is the greatest radial distance, so I'm normalizing r:[0,1]
         return cartesian_to_radius_matrix, cartesian_to_theta_matrix        
 
 
-    def generate_zernike_look_up_table(self, dm_array, num_coefficients, zernike_polynomial_matrix, cartesian_to_radius_matrix, cartesian_to_theta_matrix):
-        zernike_look_up_table = np.zeros((len(dm_array), len(dm_array[0]), num_coefficients))
-        for row_i in range(len(dm_array)):
-            for col_j in range(len(dm_array[row_i])):   
-                if dm_array[row_i][col_j] != -1:     # make sure the index at (i,j) is represents a real actuator
+    def generate_zernike_look_up_table(self, num_coefficients, zernike_polynomial_matrix, cartesian_to_radius_matrix, cartesian_to_theta_matrix):
+        zernike_look_up_table = np.zeros((len(self.dm_array), len(self.dm_array[0]), num_coefficients))
+        for row_i in range(len(self.dm_array)):
+            for col_j in range(len(self.dm_array[row_i])):   
+                if self.dm_array[row_i][col_j] != -1:     # make sure the index at (i,j) is represents a real actuator
                     for zernike_polynomial_term in range(num_coefficients):
                         value = 0.0
                         for x in range(zernike_polynomial_matrix.shape[1] - 1):
@@ -216,6 +245,68 @@ class square_grid_mirror(deformable_mirror):
                         	zernike_look_up_table[row_i][col_j][zernike_polynomial_term] = value
         return zernike_look_up_table
     
+
+    def zernike_to_mirror(self, zernike_coefficients):
+        mirror = np.zeros_like(self.dm_array, dtype='float')
+        mirror[:] = np.nan
+        for row_i in range(len(self.dm_array)):
+        	for col_j in range(len(self.dm_array[row_i])):   
+        		if self.dm_array[row_i][col_j] != -1:     # make sure the index at (i,j) is represents a real actuator
+        			sum = 0.0
+        			for coef_term in range(zernike_coefficients.size):
+        				sum += self.zernike_look_up_table[row_i][col_j][coef_term] * zernike_coefficients[coef_term]
+        			mirror[row_i][col_j] = sum
+        return mirror
+
+    def zernike_to_voltages(self, zernike_coefficients):
+        mirror = self.zernike_to_mirror(zernike_coefficients)
+        return self.mirror_to_voltages(mirror)
+
+    def plot_object(self, current_genes, best_genes, iteration_number):
+        fig = plt.figure(2)   # set the figure to be plotting to
+        plt.clf()   # clear plot so it can be plotted again
+        if iteration_number == 0:
+            plt.ion()   # enable interactive mode so we can continuously draw on the graph
+            plt.show()  # show the plot window
+
+        if self.zernike_polynomial_mode == True:
+            current_mirror_array = self.zernike_to_mirror(current_genes)
+            best_mirror_array = self.zernike_to_mirror(best_genes)
+        else:
+            current_mirror_array = self.voltages_to_mirror(current_genes)
+            best_mirror_array = self.voltages_to_mirror(best_genes)
+
+        current_x_spacing = np.linspace(0,len(self.dm_array[0])-1,len(self.dm_array[0]))  # TODO get this from mirror
+        current_y_spacing = np.linspace(0,len(self.dm_array)-1,len(self.dm_array))
+        X, Y = np.meshgrid(current_x_spacing, current_y_spacing)
+
+        mask = np.where(~np.isnan(current_mirror_array), True, False)   # create grid the same as mirror array but if the value is nan in mirror array, its value will be false, if the value isn't nan, the mask value will be true
+
+        X_masked = X[mask]
+        Y_masked = Y[mask]
+        current_mirror_array_masked = current_mirror_array[mask]
+        best_mirror_array_masked = best_mirror_array[mask]
+
+        new_x_spacing = np.linspace(0,len(self.dm_array[0])-1,len(self.dm_array[0])**2)
+        new_y_spacing = np.linspace(0,len(self.dm_array)-1,len(self.dm_array)**2)
+        new_X, new_Y = np.meshgrid(new_x_spacing, new_y_spacing)
+
+        interp_current_mirror = interpolate.griddata((X_masked, Y_masked), current_mirror_array_masked, (new_x_spacing[None,:], new_y_spacing[:,None]), method='cubic')
+        interp_best_mirror = interpolate.griddata((X_masked, Y_masked), best_mirror_array_masked, (new_x_spacing[None,:], new_y_spacing[:,None]), method='cubic')
+
+        plt.subplot(121)
+        plt.title('Current best mirror')
+        plt.imshow(interp_current_mirror,cmap=plt.get_cmap('plasma'))
+        plt.colorbar()
+
+        plt.subplot(122)
+        plt.title('Overall best mirror')
+        plt.imshow(interp_best_mirror,cmap=plt.get_cmap('plasma'))
+        plt.colorbar()
+
+        plt.draw()  # draw these things on the graph
+        plt.pause(.001)     # pause the program so the plot can be updated
+
 class XineticsDM37_1(square_grid_mirror):
     """actuator_array is an object that represents deformable mirror actuators and checks
     whether the actuator voltage values break the mirror or not
@@ -226,15 +317,12 @@ class XineticsDM37_1(square_grid_mirror):
         The array contains all of the pairs of actuators which neighbor each other (including diagonal)
     """
     def __init__(self, zernike_polynomial_mode, radial_order):
-        self.max_difference =  30 # maximum difference in voltage between neighboring actuators
+        self.max_difference =  25 # maximum difference in voltage between neighboring actuators
         self.max_voltage = 100 # maximumm voltage an acuator can have
         self.min_voltage = 0
 
         self.max_mutation = 15
-        self.zernike_polynomial_mode = zernike_polynomial_mode
-        self.radial_order = radial_order
-        self.num_zernike_coefficients = int(((radial_order+1)*(radial_order+1) + (radial_order+1))/2)
-
+        
         # array that represents the indices of acuators on the deformable mirror
         # Note: if you change to a different mirror, you will have to make a new class with a different dm_array grid
         dm_array = [[-1,-1,28,27,26,-1,-1],
@@ -245,18 +333,8 @@ class XineticsDM37_1(square_grid_mirror):
                     [-1,33,18,19,20,21,-1],
                     [-1,-1,34,35,36,-1,-1]]
 
-        self.dm_array = dm_array
-        self.numpy_dm_array = np.array(dm_array)
-        self.num_genes = np.sum(self.numpy_dm_array >= 0)
+        super().__init__(dm_array, zernike_polynomial_mode, radial_order)
 
-        # make the neighbor list an accessible attribute of the object actuator_array
-        self.dm_actuator_neighbors = self.actuator_neighbors(self.dm_array)  # make the neighbors list an attribute
-
-        if self.zernike_polynomial_mode == True:
-            self.num_genes = self.num_zernike_coefficients
-            zern_polynomial_matrix = self.generate_zernike_polynomial_matrix(radial_order, self.num_zernike_coefficients)
-            xy_to_radius, xy_to_theta = self.generate_xy_to_radiustheta(dm_array)
-            self.zernike_look_up_table = self.generate_zernike_look_up_table(self.dm_array, self.num_zernike_coefficients, zern_polynomial_matrix, xy_to_radius, xy_to_theta)
 
     def fits_object(self, genes):
         """Determine if a person breaks the mirror
@@ -304,30 +382,97 @@ class XineticsDM37_1(square_grid_mirror):
     #                              genes[17], genes[33], genes[28], genes[14], genes[4], genes[5], genes[6]])
     #     return mapped_genes
 
+    def read_genes(self, filename, num_genes):
+        if self.zernike_polynomial_mode == True:
+            return self.read_zcf(filename, num_genes)
+        elif self.zernike_polynomial_mode == False:
+            return self.read_adf(filename, num_genes)
+
+    def write_genes(self, genes, filename):
+        if self.zernike_polynomial_mode == True:
+            return self.write_zcf(genes, filename)
+        elif self.zernike_polynomial_mode == False:
+            return self.write_adf(genes, filename)
+
+    def write_zcf(self, genes, filename):
+        with open(filename + '.zcf', 'w', newline='') as fileout:   # open the file to write values to
+            tsvwriter = csv.writer(fileout, delimiter='\t') # write to the given file with values separated by tabs
+            tsvwriter.writerow(['@ZERNIKE_COEFFICIENT_FILE'])    # start of the header
+            for i in range(genes.size):     # write each gene to the file
+                tsvwriter.writerow([i+1, genes[i]])     # write the index, a tab character, and then the gene's voltage
+
+    def read_zcf(self, filename, num_genes):
+        new_gene_array = np.empty(0, 'float')   # initialize array to hold the read genes
+        try:
+            with open(self.default_directory + filename, 'r', newline='') as filein:    # open the file to be read from
+                tsvreader = csv.reader(filein, delimiter = '\t')    # make the values tab separated
+                for row in tsvreader:   # for each row in the file
+                    if len(row) == 2:   # if the number of values in the row is 2
+                        if int(row[0]) <= num_genes:    # the first number is the index, only read in num_genes genes
+                            new_gene_array = np.append(new_gene_array, float(row[1]))   #read in the second value as the gene voltage
+            return new_gene_array
+        except FileNotFoundError:
+            print("That zcf file doesn't exist! Please enter a new file (including the .zcf) within: ", new_dir_path)
+            new_filename = input()
+            number_of_genes = int(num_genes)
+            return self.read_zcf(new_filename, number_of_genes)
+
+
+    def write_adf(self, genes, filename):
+        """Write genes to a .adf file.
+
+        Parameters
+        ----------
+        person : person, class defined in people
+            The person which contains 37 genes and a figure of merit
+        filename : name of the file, string
+            The name of the file you want to save the genes to
+        """
     
-    def zernike_to_mirror(self, zernike_coefficients):
-        mirror = np.zeros_like(self.dm_array, dtype='float')
-        for row_i in range(len(self.dm_array)):
-        	for col_j in range(len(self.dm_array[row_i])):   
-        		if self.dm_array[row_i][col_j] != -1:     # make sure the index at (i,j) is represents a real actuator
-        			sum = 0.0
-        			for coef_term in range(zernike_coefficients.size):
-        				sum += self.zernike_look_up_table[row_i][col_j][coef_term] * zernike_coefficients[coef_term]
-        			mirror[row_i][col_j] = sum
-        return mirror
+        with open(filename + '.adf', 'w', newline='') as fileout:   # open the file to write values to
+            tsvwriter = csv.writer(fileout, delimiter='\t') # write to the given file with values separated by tabs
+            tsvwriter.writerow(['@ASCII_DATA_FILE'])    # start of the header
+            tsvwriter.writerow(['NCurves=1'])   # number of genes which are output
+            tsvwriter.writerow(['NPoints=39'])  # number of genes
+            tsvwriter.writerow(['Subtitle={0} : {1}'.format(time.strftime("%m/%d/%y"), time.strftime("%I:%M %p"))])   # output the date
+            tsvwriter.writerow(['Title=Save'])  # saving the file
+            tsvwriter.writerow(['@END_HEADER']) # end the header
+            for i in range(genes.size):     # write each gene to the file
+                tsvwriter.writerow([i+1, genes[i]])     # write the index, a tab character, and then the gene's voltage
+            tsvwriter.writerow([38, float(0)])  # output the nonexistent mutation amount to be backwards compatible with the labview program
+            tsvwriter.writerow([39, float(0)])     # output the figure of merit
 
-    def zernike_to_voltages(self, zernike_coefficients):
-        mirror = self.zernike_to_mirror(zernike_coefficients)
-        return self.mirror_to_voltages(mirror)
+    def read_adf(self, filename, num_genes):
+        """Read the genes within a .adf file to a person.
 
-    def mirror_to_voltages(self, mirror):
-        return self.mirror_to_voltages_array(mirror, self.dm_array)
+        Parameters
+        ----------
+        filename : name of the file, string
+            The name of the file you want to read the genes from.
+        num_genes : number of genes, int
+            The number of genes to read from the file.
 
-    def voltages_to_mirror(self, voltages):
-        return self.voltages_to_mirror_array(voltages, self.dm_array)
+        Returns
+        -------
+        new_gene_array : gene array, numpy array
+            The gene array read from the file
+        """
+        new_gene_array = np.empty(0, 'float')   # initialize array to hold the read genes
+        try:
+            with open(self.default_directory + filename, 'r', newline='') as filein:    # open the file to be read from
+                tsvreader = csv.reader(filein, delimiter = '\t')    # make the values tab separated
+                for row in tsvreader:   # for each row in the file
+                    if len(row) == 2:   # if the number of values in the row is 2
+                        if int(row[0]) <= num_genes:    # the first number is the index, only read in num_genes genes
+                            new_gene_array = np.append(new_gene_array, float(row[1]))   #read in the second value as the gene voltage
+            return new_gene_array
+        except FileNotFoundError:
+            print("That adf file doesn't exist! Please enter a new file (including the .adf) within: ", new_dir_path)
+            new_filename = input()
+            number_of_genes = int(num_genes)
+            return self.read_adf(new_filename, number_of_genes)
 
-    def plot_voltages(self, voltages):
-        self.plot_voltage_array(voltages, dm_array)
+
    
 class XineticsDM37_2(square_grid_mirror):
     """actuator_array is an object that represents deformable mirror actuators and checks
@@ -339,14 +484,11 @@ class XineticsDM37_2(square_grid_mirror):
         The array contains all of the pairs of actuators which neighbor each other (including diagonal)
     """
     def __init__(self, zernike_polynomial_mode, radial_order):
-        self.max_difference =  30 # maximum difference in voltage between neighboring actuators
+        self.max_difference =  25 # maximum difference in voltage between neighboring actuators
         self.max_voltage = 100 # maximumm voltage an acuator can have
         self.min_voltage = 0
 
         self.max_mutation = 15
-        self.zernike_polynomial_mode = zernike_polynomial_mode
-        self.radial_order = radial_order
-        self.num_zernike_coefficients = int(((radial_order+1)*(radial_order+1) + (radial_order+1))/2)
 
         # array that represents the indices of acuators on the deformable mirror
         # Note: if you change to a different mirror, you will have to make a new class with a different dm_array grid
@@ -358,19 +500,7 @@ class XineticsDM37_2(square_grid_mirror):
                     [-1,33,18,19,20,21,-1],
                     [-1,-1,34,35,36,-1,-1]]
 
-        self.dm_array = dm_array
-        self.numpy_dm_array = np.array(dm_array)
-        self.num_genes = np.sum(self.numpy_dm_array >= 0)
-
-        # make the neighbor list an accessible attribute of the object actuator_array
-        self.dm_actuator_neighbors = self.actuator_neighbors(self.dm_array)  # make the neighbors list an attribute
-
-        if self.zernike_polynomial_mode == True:
-            self.num_genes = self.num_zernike_coefficients
-            zern_polynomial_matrix = self.generate_zernike_polynomial_matrix(radial_order, self.num_zernike_coefficients)
-            xy_to_radius, xy_to_theta = self.generate_xy_to_radiustheta(dm_array)
-            self.zernike_look_up_table = self.generate_zernike_look_up_table(self.dm_array, self.num_zernike_coefficients, zern_polynomial_matrix, xy_to_radius, xy_to_theta)
-
+        super().__init__(dm_array, zernike_polynomial_mode, radial_order)
 
 
     def fits_object(self, genes):
@@ -419,29 +549,7 @@ class XineticsDM37_2(square_grid_mirror):
     #                              genes[17], genes[33], genes[28], genes[14], genes[4], genes[5], genes[6]])
     #     return mapped_genes
 
-    def zernike_to_mirror(self, zernike_coefficients):
-        mirror = np.zeros_like(self.dm_array, dtype='float')
-        for row_i in range(len(self.dm_array)):
-        	for col_j in range(len(self.dm_array[row_i])):   
-        		if self.dm_array[row_i][col_j] != -1:     # make sure the index at (i,j) is represents a real actuator
-        			sum = 0.0
-        			for coef_term in range(zernike_coefficients.size):
-        				sum += self.zernike_look_up_table[row_i][col_j][coef_term] * zernike_coefficients[coef_term]
-        			mirror[row_i][col_j] = sum
-        return mirror
 
-    def zernike_to_voltages(self, zernike_coefficients):
-        mirror = self.zernike_to_mirror(zernike_coefficients)
-        return self.mirror_to_voltages(mirror)
-
-    def mirror_to_voltages(self, mirror):
-        return self.mirror_to_voltages_array(mirror, self.dm_array)
-
-    def voltages_to_mirror(self, voltages):
-        return self.voltages_to_mirror_array(voltages, self.dm_array)
-
-    def plot_voltages(self, voltages):
-        self.plot_voltage_array(voltages, dm_array)
    
 class Mirror_test_37(square_grid_mirror):
     def __init__(self):
