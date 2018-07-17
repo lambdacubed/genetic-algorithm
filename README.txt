@@ -1,6 +1,6 @@
 This is a genetic algorithm used for machine learning. It is a black-box optimization technique originally 
-developed by O. Albert and was published in Optics Letters, Vol. 25, No. 15, August 1, 2000. It was then moved to 
-python with some adjustments to get rid of any parts that were no longer used. 
+developed by O. Albert and was published in Optics Letters, Vol. 25, No. 15, August 1, 2000. It was then 
+moved to python with some adjustments to get rid of any parts that were no longer used. 
 
 
 

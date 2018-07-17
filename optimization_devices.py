@@ -589,7 +589,25 @@ class Mirror_test_37(square_grid_mirror):
     #                              genes[17], genes[33], genes[28], genes[14], genes[4], genes[5], genes[6]])
     #     return mapped_genes
 
+
 if __name__ == "__main__":
     print('You meant to run GeneticAlgorithm.py')
+    #filename1 = "charge7p65mmbestOfLastRun.adf"
+    #mirror = XineticsDM37_1("False", 0)
+    #genes = mirror.read_adf(filename1, 37)
+    #mirror1 = mirror.voltages_to_mirror(genes)
+    #plt.figure(1)
+    #plt.imshow(mirror1)
+    #plt.colorbar()
 
+
+    #filename2 = "2inchMorningRef.adf"
+    #plt.figure(2)
+    #genes = mirror.read_adf(filename2, 37)
+    #mirror2 = mirror.voltages_to_mirror(genes)
+
+    #plt.imshow(mirror2)
+    #plt.colorbar()
+
+    #plt.show()
 
