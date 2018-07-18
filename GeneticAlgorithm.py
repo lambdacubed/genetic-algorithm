@@ -172,10 +172,10 @@ def genetic_algorithm():
                 break   # break out of the while loop
         elif saving_option == 'graph':  # if the user wants to save the graph
             directory_path = save_different_directory(directory_path + file_f.FOM_GRAPH_FOLDER)
-            print("Enter the file name you want to be saved without the file extension (for test.csv & test.pdf, input test):\nNote: This saves a .csv of graph's values and a pdf of the python figure\nAlso, this will overwrite a file with the same name")
+            print("Enter the file name you want to be saved without the file extension (for test.csv & test.png, input test):\nNote: This saves a .csv of graph's values and a pdf of the python figure\nAlso, this will overwrite a file with the same name")
             filename = input()  # get user input from for what filename they want
             file_f.write_figures_of_merit(figures_of_merit, directory_path + filename)   # write the figures of merit to a comma separated value file
-            plt.savefig( directory_path +'%s.pdf' %  filename, dpi = 300, bbox_inches = 'tight')
+            plt.savefig( directory_path +'%s.png' %  filename, dpi = 300, bbox_inches = 'tight')
             if anything_else() == 'n':   # if they don't want to do anything else
                 break   # break out of the while loop
         elif saving_option == 'all_best':
@@ -191,11 +191,11 @@ def genetic_algorithm():
                 break   # break out of the while loop
         elif saving_option == 'everything':
             print("The directory it is saving into is " + directory_path + file_f.FOM_GRAPH_FOLDER + " and " + opt_device.default_directory)
-            print("Enter the file name you want for all of these files (for 'test.csv', 'test.pdf', etc., input 'test'.\tNote: this will overwrite a file with the same name")
+            print("Enter the file name you want for all of these files (for 'test.csv', 'test.png', etc., input 'test'.\tNote: this will overwrite a file with the same name")
             filename = input()
             opt_device.write_genes(best_person.genes, opt_device.default_directory + filename)    # write the genes to the input file
             file_f.write_figures_of_merit(figures_of_merit, directory_path + file_f.FOM_GRAPH_FOLDER + filename)   # write the figures of merit to a comma separated value file
-            plt.savefig( directory_path + file_f.FOM_GRAPH_FOLDER +'%s.pdf' %  filename, dpi = 300, bbox_inches = 'tight')
+            plt.savefig( directory_path + file_f.FOM_GRAPH_FOLDER +'%s.png' %  filename, dpi = 300, bbox_inches = 'tight')
             new_dir_path = opt_device.default_directory + "\\" + filename + "\\" 
             if not os.path.exists(new_dir_path):
                 os.makedirs(new_dir_path)

@@ -549,6 +549,95 @@ class XineticsDM37_2(square_grid_mirror):
     #                              genes[17], genes[33], genes[28], genes[14], genes[4], genes[5], genes[6]])
     #     return mapped_genes
 
+    def read_genes(self, filename, num_genes):
+        if self.zernike_polynomial_mode == True:
+            return self.read_zcf(filename, num_genes)
+        elif self.zernike_polynomial_mode == False:
+            return self.read_adf(filename, num_genes)
+
+    def write_genes(self, genes, filename):
+        if self.zernike_polynomial_mode == True:
+            return self.write_zcf(genes, filename)
+        elif self.zernike_polynomial_mode == False:
+            return self.write_adf(genes, filename)
+
+    def write_zcf(self, genes, filename):
+        with open(filename + '.zcf', 'w', newline='') as fileout:   # open the file to write values to
+            tsvwriter = csv.writer(fileout, delimiter='\t') # write to the given file with values separated by tabs
+            tsvwriter.writerow(['@ZERNIKE_COEFFICIENT_FILE'])    # start of the header
+            for i in range(genes.size):     # write each gene to the file
+                tsvwriter.writerow([i+1, genes[i]])     # write the index, a tab character, and then the gene's voltage
+
+    def read_zcf(self, filename, num_genes):
+        new_gene_array = np.empty(0, 'float')   # initialize array to hold the read genes
+        try:
+            with open(self.default_directory + filename, 'r', newline='') as filein:    # open the file to be read from
+                tsvreader = csv.reader(filein, delimiter = '\t')    # make the values tab separated
+                for row in tsvreader:   # for each row in the file
+                    if len(row) == 2:   # if the number of values in the row is 2
+                        if int(row[0]) <= num_genes:    # the first number is the index, only read in num_genes genes
+                            new_gene_array = np.append(new_gene_array, float(row[1]))   #read in the second value as the gene voltage
+            return new_gene_array
+        except FileNotFoundError:
+            print("That zcf file doesn't exist! Please enter a new file (including the .zcf) within: ", new_dir_path)
+            new_filename = input()
+            number_of_genes = int(num_genes)
+            return self.read_zcf(new_filename, number_of_genes)
+
+
+    def write_adf(self, genes, filename):
+        """Write genes to a .adf file.
+
+        Parameters
+        ----------
+        person : person, class defined in people
+            The person which contains 37 genes and a figure of merit
+        filename : name of the file, string
+            The name of the file you want to save the genes to
+        """
+    
+        with open(filename + '.adf', 'w', newline='') as fileout:   # open the file to write values to
+            tsvwriter = csv.writer(fileout, delimiter='\t') # write to the given file with values separated by tabs
+            tsvwriter.writerow(['@ASCII_DATA_FILE'])    # start of the header
+            tsvwriter.writerow(['NCurves=1'])   # number of genes which are output
+            tsvwriter.writerow(['NPoints=39'])  # number of genes
+            tsvwriter.writerow(['Subtitle={0} : {1}'.format(time.strftime("%m/%d/%y"), time.strftime("%I:%M %p"))])   # output the date
+            tsvwriter.writerow(['Title=Save'])  # saving the file
+            tsvwriter.writerow(['@END_HEADER']) # end the header
+            for i in range(genes.size):     # write each gene to the file
+                tsvwriter.writerow([i+1, genes[i]])     # write the index, a tab character, and then the gene's voltage
+            tsvwriter.writerow([38, float(0)])  # output the nonexistent mutation amount to be backwards compatible with the labview program
+            tsvwriter.writerow([39, float(0)])     # output the figure of merit
+
+    def read_adf(self, filename, num_genes):
+        """Read the genes within a .adf file to a person.
+
+        Parameters
+        ----------
+        filename : name of the file, string
+            The name of the file you want to read the genes from.
+        num_genes : number of genes, int
+            The number of genes to read from the file.
+
+        Returns
+        -------
+        new_gene_array : gene array, numpy array
+            The gene array read from the file
+        """
+        new_gene_array = np.empty(0, 'float')   # initialize array to hold the read genes
+        try:
+            with open(self.default_directory + filename, 'r', newline='') as filein:    # open the file to be read from
+                tsvreader = csv.reader(filein, delimiter = '\t')    # make the values tab separated
+                for row in tsvreader:   # for each row in the file
+                    if len(row) == 2:   # if the number of values in the row is 2
+                        if int(row[0]) <= num_genes:    # the first number is the index, only read in num_genes genes
+                            new_gene_array = np.append(new_gene_array, float(row[1]))   #read in the second value as the gene voltage
+            return new_gene_array
+        except FileNotFoundError:
+            print("That adf file doesn't exist! Please enter a new file (including the .adf) within: ", new_dir_path)
+            new_filename = input()
+            number_of_genes = int(num_genes)
+            return self.read_adf(new_filename, number_of_genes)
 
    
 class Mirror_test_37(square_grid_mirror):

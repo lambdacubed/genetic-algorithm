@@ -51,11 +51,11 @@ class PCI_DM_comm(object):
         mirror : object from mirror_functions.py
             This contains the list of neighbors to make sure the genes don't break the mirror.
         """
-        if mirror.zernike_polynomial_mode == True:
-            voltages = mirror.zernike_to_voltages(genes)
-        else:
-            voltages = genes
-        if  mirror.fits_mirror(voltages): # if the genes don't break the mirror
+        if  mirror.fits_object(genes): # if the genes don't break the mirror
+            if mirror.zernike_polynomial_mode == True:
+                voltages = mirror.zernike_to_voltages(genes)
+            else:
+                voltages = genes
             applied_voltages = voltages * self.voltage_multiplier # multiply each gene by some mirror constant to get the voltages sent to the mirror
             voltage_array = mirror.array_conversion_PCI(applied_voltages) # change the mapping of the indices
             self.__send_to_board(voltage_array[:19], voltage_array[19:])
@@ -135,11 +135,11 @@ class USB_DM_comm(object):
         mirror : object from mirror_functions.py
             This contains the list of neighbors to make sure the genes don't break the mirror.
         """
-        if mirror.zernike_polynomial_mode == True:
-            voltages = mirror.zernike_to_voltages(genes)
-        else:
-            voltages = genes
-        if mirror.fits_mirror(voltages): # if the genes don't break the mirror
+        if mirror.fits_object(genes): # if the genes don't break the mirror
+            if mirror.zernike_polynomial_mode == True:
+                voltages = mirror.zernike_to_voltages(genes)
+            else:
+                voltages = genes
             applied_voltages = voltages * self.voltage_multiplier # multiply each gene by some mirror constant to get the voltages sent to the mirror
             voltage_array = mirror.array_conversion_USB(applied_voltages) # change the mapping of the indices
             self.__send_to_board(voltage_array)
@@ -163,7 +163,7 @@ class USB_DM_comm(object):
        
 class Test_comm(object):
     def __init__(self):
-        self.waiting_time = 0 # seconds
+        self.waiting_time = 0.1 # seconds
         return
 
     def write_to_object(self, genes, mirror):
