@@ -1,12 +1,16 @@
-"""This file plots the graph of figures of merit and the mirror shape
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-Functions:
-plot_performance() -- plots the figures of merit of the given people
 """
+This module contains functions used for plotting.
+
+"""
+
 
 import numpy as np  # general useful python library
 import matplotlib.pyplot as plt # plotting library
 # TODO make this a part of people and get rid of plot_functions
+
 def plot_performance(iteration_number, figures_of_merit):
     """
     Plot the figures of merit 

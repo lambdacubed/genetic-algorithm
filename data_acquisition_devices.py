@@ -1,11 +1,25 @@
-"""
-This module opens up the specific data acquisition hardware and returns the desired output
-
-Functions:
-ic() -- Grabs an image from an IC camera
-NI_DAQ_voltage() -- acquires a voltage from the NI hardware (usually connected to the lock-in amplifier)
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 """
+This module contains classes for all of the available data acquisition devices.
+
+
+Attributes
+----------
+DAQ_DEVICES : tuple
+    A tuple of strings which correspond to specific data acquisition devices.
+DRV_SUCCESS : int
+    Andor error code which is given in the sdk pdf file.
+DRV_IDLE : int
+    Andor error code which is given in the sdk pdf file.
+PIXEL_FORMAT_TOP_DOWN : tuple
+    Pixel formats as strings for imaging source cameras which organize pixels top down 
+    instead of down up.
+
+"""
+# TODO comment the lines in this code
+
 
 import figure_of_merit_functions as figure_of_merit_f
 
@@ -29,13 +43,10 @@ import time     # this is used to make the program sleep for a little bit so the
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
-DAQ_DEVICES = ("Andor", "NI_DAQ", "IC", "Picoscope", "Test")
 
-# These are Andor error codes which are given in the sdk pdf file
+DAQ_DEVICES = ("Andor", "NI_DAQ", "IC", "Picoscope", "Test")
 DRV_SUCCESS = 20002
 DRV_IDLE = 20073
-
-# Pixel formats for imaging source cameras as strings which organize pixels top down instead of down up
 PIXEL_FORMAT_TOP_DOWN = ('Y800', 'YGB0', 'YGB1', 'UYBY', 'Y16')
 
 

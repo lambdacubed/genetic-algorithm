@@ -1,12 +1,14 @@
-"""This file contains functions to generate and modify the "people" or actuator voltages 
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-Classes:
-person() -- Create a person.
-parent() -- Create a parent.
-parent_group() -- A container for multiple parents
-child() -- Creates a child from parents
-child_group() -- A container for multiple children
 """
+This module defines the people classes. These classes contain the genes which
+fully determine an optimization object and information about how well those
+genes performed.
+
+"""
+
+# TODO comment the lines in this code
 
 import numpy as np
 import math     # this library has math functions like sine and cosine

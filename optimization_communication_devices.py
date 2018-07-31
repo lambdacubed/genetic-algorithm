@@ -1,4 +1,19 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
+"""
+This module contains classes of devices which communicate with optimization 
+devices.
+
+Attributes
+----------
+DEVICES : tuple
+    Strings which correspond to classes that communicate with an optimization 
+    device
+
+"""
+
+# TODO comment the lines in this code
 #import pyvisa   # Use this when using the pyvisa code in send_to_board pci
 import win32com.client  # Use this when using the LabVIEW VI in send_to_board # Python ActiveX Client
 import numpy as np  # general useful python library

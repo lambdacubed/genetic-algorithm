@@ -1,17 +1,20 @@
-"""This file sets voltages on the mirror from a file, for a constant voltage, or tests
-individual actuators
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-Functions:
-send_file() -- sets voltages on the mirror from a file of actuator voltages
-send_genes() -- sets constant voltages on the mirror which are determined within the function
-test_actuators -- test the voltages for individual actuators
 """
+This module allows the user to send different types of genes to a mirror for 
+testing.
+
+"""
+
+# TODO comment the lines in this code
 
 import numpy as np  # general useful python library
 import file_functions as file_f     # used to read from files
 import optimization_communication_devices as opt_com_devices
 import optimization_devices
 import initialization_functions as init_f
+
 def send_file(opt_comm_device, opt_device):
     """
     Sends voltages to the mirror from a file.

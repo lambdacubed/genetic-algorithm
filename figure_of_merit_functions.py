@@ -1,10 +1,13 @@
-'''
-Created on Wed March 28 2018
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-@author Yong Ma, yongm@umich.edu
-'''
+"""
+This module contains functions which determine the figure of merit for each
+data acquisition device available.
 
-#from pyicic.IC_ImagingControl import *
+"""
+
+from pyicic.IC_ImagingControl import *
 import numpy as np 
 import matplotlib.pyplot as plt
 import copy
@@ -142,17 +145,14 @@ def NI_DAQ_FOM(voltage, fom_num):
         print(voltage)  
         return
     
-    # Return the positive voltage
     if fom_num == 1:
-    	return voltage
-    
-    #Return the negative voltage
+    	return voltage  # Return the positive voltage
     elif fom_num == 2:
-    	return -voltage
+    	return -voltage # Return the negative voltage
     
 def Andor_FOM(image, fom_num):
     """
-    Calculate the figure of merit for the picoscope.
+    Calculate the figure of merit for the Andor camera.
 
     ...
 
@@ -180,4 +180,4 @@ def Andor_FOM(image, fom_num):
         total = np.sum(image)
         print(total)
         fom = total
-        return fom
+        return fom  # return the sum of the image

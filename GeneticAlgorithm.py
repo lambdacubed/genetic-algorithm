@@ -1,8 +1,12 @@
-"""This file runs the genetic algorithm
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-Functions:
-genetic_algorithm() -- Start, run, and end the genetic algorithm.
 """
+This module runs the genetic algorithm
+
+"""
+
+
 import people
 import msvcrt
 import optimization_devices
@@ -17,7 +21,6 @@ import matplotlib.pyplot as plt
 import data_acquisition_devices as daq_devices
 import optimization_communication_devices as opt_com_devices
 
-# TODO comment the file saving stuff at the end, and save diff directory
 
 def save_different_directory(default_directory):
     """
@@ -80,14 +83,13 @@ def genetic_algorithm():
     """
     
     warnings.filterwarnings("ignore",".*GUI is implemented.*")  # filter out the plotting warning about deprecation
-    
-    """Start, run, and end the genetic algorithm."""
-    
-    print('You are running the genetic algorithm')
+        
+    print('You are running the evolutionary algorithm')
     
     #This function sets all of the values of the number of parents, children, and mutation amount
-    num_init_parents, num_init_children, init_voltage, filename, num_parents, num_children, mutation_percentage, data_acquisition_device, mirror_communication_device, fom_num, deformable_mirror, zernike_polynomial_mode, radial_order = initialization_f.initialize()
-    """Note: To change the default values, go into genetic_algorithm.ini"""
+    (num_init_parents, num_init_children, init_voltage, filename, num_parents, num_children, 
+     mutation_percentage, data_acquisition_device, mirror_communication_device, fom_num, 
+     deformable_mirror, zernike_polynomial_mode, radial_order) = initialization_f.initialize()
     
     print('\nNOTE: LabView must be open in order to run the program\n')
     print('Here are the options you have while the program is running:')
@@ -103,28 +105,32 @@ def genetic_algorithm():
     		break   # break out of the infinite loop
     
     
-    opt_device = optimization_devices.initialize_opt_device(deformable_mirror, zernike_polynomial_mode, radial_order) # initialize the class to determine if actuator voltages break the mirror or not
-    daq_device = daq_devices.initialize_daq_device(data_acquisition_device, fom_num)	# open and initialize the data acquisition device being used
-    opt_comm_device = opt_com_devices.initialize_comm_device(mirror_communication_device)
+    opt_device = optimization_devices.initialize_opt_device(deformable_mirror, zernike_polynomial_mode, 
+                                                            radial_order) # open and initialize the optimization device being used
+    daq_device = daq_devices.initialize_daq_device(data_acquisition_device, 
+                                                   fom_num)	# open and initialize the data acquisition device being used
+    opt_comm_device = opt_com_devices.initialize_comm_device(mirror_communication_device)   # open and initialize the optimization communication device being used
 
     print('Starting...')
     start_time = time.time()    # determine the time when the algorithm starts
 
     iteration_number = 0
     
-    parents = people.parent_group(num_init_parents, opt_device, init_voltage, filename)    # create parents from above constraints
-    children = people.child_group(num_init_children, parents, opt_device)       # create children from the given parents
+    parents = people.parent_group(num_init_parents, opt_device, init_voltage, 
+                                  filename)    # create parents from initialization constraints
+    children = people.child_group(num_init_children, parents, 
+                                  opt_device)       # create children from the given parents and do crossover
     children.mutate(mutation_percentage, opt_device)    # mutate the children
     
-    all_people = people.person_group(parents, children)     # combine all of the children and parents into a single container
-    all_people.test_and_sort_people(opt_device, daq_device, opt_comm_device)   # measure the figures of merits and sort the people so the highest figure of merit is 0th indexed
+    all_people = people.person_group(parents, children)     # combine all of the children and parents into a single object
+    all_people.test_and_sort_people(opt_device, daq_device, 
+                                    opt_comm_device)   # measure the figures of merits and sort the people so the highest figure of merit is 0th indexed
     
     best_person = all_people.people[0]  # the best person is the 0th indexed person in all_people
     print('best_person\n', best_person.figure_of_merit) # show the best person's genes and figure of merit
     
     best_people = np.empty(0, people.person)   # initialize the array of best people
     best_people = np.append(best_people, best_person)   # store best person
-
 
     past_figures_of_merit = all_people.best_figures_of_merit(num_parents)
     
@@ -150,19 +156,22 @@ def genetic_algorithm():
         children.mutate(mutation_percentage, opt_device)    # mutate the children
         
         all_people = people.person_group(parents, children)     # combine all of the children and parents into a single container
-        all_people.test_and_sort_people(opt_device, daq_device, opt_comm_device)   # measure the figures of merits and sort the people so the highest figure of merit is 0th indexed
+        all_people.test_and_sort_people(opt_device, daq_device, 
+                                        opt_comm_device)   # measure the figures of merits and sort the people so the highest figure of merit is 0th indexed
         
         new_best_person = all_people.people[0]  # the best person is the 0th indexed person in all_people
 
         best_people = np.append(best_people, new_best_person)   # store best person
 
-        if new_best_person.figure_of_merit > best_person.figure_of_merit:     # determine if the best person's figure of merit in this run is better than the current best person's figure of merit
+        if new_best_person.figure_of_merit > best_person.figure_of_merit:     # if the current best FOM is better than the overall best FOM
         	best_person = new_best_person   # if the new best person is better, they are the overall best person ever
         print('best_person\n', best_person.figure_of_merit) # print out the best person ever made
 
-        opt_device.plot_object(new_best_person.genes, best_person.genes, iteration_number)
+        opt_device.plot_object(new_best_person.genes, best_person.genes, 
+                               iteration_number)  # plot the current best and overall best genes on the optimization device 
 
-        figures_of_merit = np.concatenate((past_figures_of_merit, all_people.best_figures_of_merit(num_parents)), axis=1)   # concatenate the previous figure of merit matrix with the current figures of merit
+        figures_of_merit = np.concatenate((past_figures_of_merit, all_people.best_figures_of_merit(num_parents)), 
+                                          axis=1)   # concatenate the previous figure of merit matrix with the current figures of merit
         iteration_number, past_figures_of_merit = plot_f.plot_performance(iteration_number, figures_of_merit)   # plot the progressions of figures of merit
         
         print('Time to run: ', time.time() - start_time, ' seconds')    # print out the number of seconds since the algorithm started
@@ -187,21 +196,24 @@ def genetic_algorithm():
                 break   # break out of the while loop
         elif saving_option == 'graph':  # if the user wants to save the graph
             directory_path = save_different_directory(directory_path + file_f.FOM_GRAPH_FOLDER)
-            print("Enter the file name you want to be saved without the file extension (for test.csv & test.png, input test):\nNote: This saves a .csv of graph's values and a pdf of the python figure\nAlso, this will overwrite a file with the same name")
+            print("Enter the file name you want to be saved without the file extension (for test.csv & test.png, input test):",
+                  "\nNote: This saves a .csv of graph's values and a pdf of the python figure\nAlso, this will overwrite a file with the same name")
             filename = input()  # get user input from for what filename they want
             file_f.write_figures_of_merit(figures_of_merit, directory_path + filename)   # write the figures of merit to a comma separated value file
             plt.savefig( directory_path +'%s.png' %  filename, dpi = 300, bbox_inches = 'tight')
             if anything_else() == 'n':   # if they don't want to do anything else
                 break   # break out of the while loop
-        elif saving_option == 'all_best':
+        elif saving_option == 'all_best':   # if the user wants to save all of the best genes
             directory_path = save_different_directory(opt_device.default_directory)
-            print("Enter the folder you want the best people to be saved into (to have everything saved in a folder named 'test', input 'test'.:\nNote: this will overwrite a folder with the same name\nNote: It will save each person according to its iteration number. The ith person will be saved as 'i.[file_extension]'")
+            print("Enter the folder you want the best people to be saved into (to have everything saved in a",
+                  "folder named 'test', input 'test'.:\nNote: this will overwrite a folder with the same name",
+                  "\nNote: It will save each person according to its iteration number. The ith person will be saved as 'i.[file_extension]'")
             folder = input()
-            new_dir_path = directory_path + "\\" + folder + "\\" 
-            if not os.path.exists(new_dir_path):
+            new_dir_path = directory_path + "\\" + folder + "\\"    # determine the directory path to save the genes to
+            if not os.path.exists(new_dir_path):    # if that path doesn't exist, create it
                 os.makedirs(new_dir_path)
-            for i in range(best_people.size):
-                opt_device.write_genes(best_people[i].genes, new_dir_path + str(i))
+            for i in range(best_people.size):   # for each best person
+                opt_device.write_genes(best_people[i].genes, new_dir_path + str(i)) # write each gene
             if anything_else() == 'n':   # if they don't want to do anything else
                 break   # break out of the while loop
         elif saving_option == 'everything':
@@ -211,11 +223,11 @@ def genetic_algorithm():
             opt_device.write_genes(best_person.genes, opt_device.default_directory + filename)    # write the genes to the input file
             file_f.write_figures_of_merit(figures_of_merit, directory_path + file_f.FOM_GRAPH_FOLDER + filename)   # write the figures of merit to a comma separated value file
             plt.savefig( directory_path + file_f.FOM_GRAPH_FOLDER +'%s.png' %  filename, dpi = 300, bbox_inches = 'tight')
-            new_dir_path = opt_device.default_directory + "\\" + filename + "\\" 
-            if not os.path.exists(new_dir_path):
+            new_dir_path = opt_device.default_directory + "\\" + filename + "\\"    # determine the path to save the best people
+            if not os.path.exists(new_dir_path):    # if the directory path doesn't exist, create it
                 os.makedirs(new_dir_path)
-            for i in range(best_people.size):
-                opt_device.write_genes(best_people[i].genes, new_dir_path + str(i))
+            for i in range(best_people.size):   # for each best person
+                opt_device.write_genes(best_people[i].genes, new_dir_path + str(i)) # write each gene
             if anything_else() == 'n':   # if they don't want to do anything else
                 break   # break out of the while loop
         elif saving_option == 'none':   # if the user doesn't want to do anything with the data

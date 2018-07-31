@@ -1,12 +1,23 @@
-"""This file contains functions to write and read genes to and from 
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-Functions:
 """
+This module contains functions which are used for file reading and writing.
+
+Attributes
+----------
+FOM_GRAPH_FOLDER : str
+    The folder in which the figure of merit graphs will be written to.
+
+"""
+
+
 import csv
 import numpy as np
 import time
 import os
-FOM_GRAPH_FOLDER = '\saved_graphs\\'    # directory for mirror graphs
+
+FOM_GRAPH_FOLDER = '\saved_graphs\\'
 
 def write_figures_of_merit(figures_of_merit, filename):
     """Write figures of merit to a .csv file.

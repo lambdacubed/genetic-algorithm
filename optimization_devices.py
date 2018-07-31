@@ -2,23 +2,16 @@
 # -*- coding: utf-8 -*-
 
 """
-Example NumPy style docstrings.
-
-This module demonstrates documentation as specified by the `NumPy
-Documentation HOWTO`_. Docstrings may extend over multiple lines. Sections
-are created with a section header followed by an underline of equal length.
-
-Notes
------
-This is an example of an indented section. It's like any other section,
-but the body is indented to help it stand out from surrounding text.
+This module contains classes for all of the optimization devices available.
 
 Attributes
 ----------
-module_level_variable1 : int
-    Module level variables may be documented in either the ``Attributes``
-    section of the module docstring, or in an inline docstring immediately
-    following the variable.
+MIRROR_VOLTAGES_FOLDER : str
+    Folder in which genes in the form of voltages are saved.
+MIRROR_ZERNIKE_FOLDER : str
+    Folder in which genes in the form of Zernike coefficients are saved.
+OPT_DEVICES : tuple
+    Strings which correspond to available optimization devices.
 
 """
 
@@ -31,7 +24,7 @@ import os
 import csv
 import time
 
-MIRROR_VOLTAGES_FOLDER = '\saved_mirrors\\'     # directory for mirror actuator files
+MIRROR_VOLTAGES_FOLDER = '\saved_mirrors\\'
 MIRROR_ZERNIKE_FOLDER = '\saved_zernike_coefficients\\'
 
 OPT_DEVICES = ("37_square_grid_mirror_1", "37_mirror_test")

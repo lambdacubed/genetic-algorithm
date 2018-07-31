@@ -1,12 +1,16 @@
-"""This file contains functions to initialize variables and to change the default values if desired
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-Functions:
-change_value() -- Change any variable value in the program utilizing user input.
-change_others() -- This function checks if the user wants to change any other variables.
-initialize() -- This function contains all default values and defines all initial variables.
 """
+This module initializes all of the variables to be used in the genetic 
+algorithm.
 
-# TODO comment the entire file lol
+Attributes
+----------
+INITIALIZATION_FILE : str
+    The file to initialize all of the variables from.
+
+"""
 
 import msvcrt
 import file_functions as file_f
@@ -152,7 +156,7 @@ def initialize():
     num_init_parents = int(initialization_variables[0])        # number of parents to start with
     num_init_children = int(initialization_variables[1])     # number of starting children
     
-    """Note: You can either have an initial voltage or a filename to read from, not both"""
+    # Note: You can either have an initial voltage or a filename to read from, not both"""
     if initialization_variables[2] == "None":
         init_voltage = None
     else:
@@ -162,7 +166,6 @@ def initialize():
         filename = None
     else:
         filename = str(initialization_variables[3])             # name of file to read from
-    '''Note: Also, it can only read the file if it is in saved_mirrors'''
 
     num_parents = int(initialization_variables[4])            # number of parents in loop iterations
     num_children = int(initialization_variables[5])          # number of children in loop iterations
@@ -183,7 +186,7 @@ def initialize():
     if not (init_voltage is None) and not (filename is None):
         print('Error: You have both an initial voltage and a filename to read from')
 
-    print("These are the current variables' values: ")
+    print("These are the current variables' values as read in from " + INITIALIZATION_FILE + ": ")
     print('\tNumber of initial parents: ', num_init_parents)
     print('\tNumber of initial children: ', num_init_children, '\n')
     print('\tNumber of parents: ', num_parents)
@@ -192,10 +195,10 @@ def initialize():
     print('\tInitial voltage of starting parent: ', init_voltage, '\n')
     print('\tMutation percentage: ', mutation_percentage, '\n')
     print('\tData acquisition device: ', data_acquisition_device, '\n')
-    print('\tOptimization communication device: ', optimization_communication_device, '\n')
+    print('\tOptimization communication device: ', optimization_communication_device)
     print('\tOptimization device: ', optimization_device, '\n')
     print('\tFigure of merit calculation number: ', fom_num, '\n')
-    print('\tZernike polynomial mode: ', zernike_polynomial_mode, '\n')
+    print('\tZernike polynomial mode: ', zernike_polynomial_mode)
     print('\tMaximum radial order of Zernike polynomials used: ', radial_order, '\n')
     print('Would you like to change any of these values?\nEnter "y" or "n"')
     print('Note: the locations of all important variables are in the README.txt file')
@@ -304,7 +307,9 @@ def initialize():
                 break
             else:
                 print('You did not enter a valid command')
-    return num_init_parents, num_init_children, init_voltage, filename, num_parents, num_children, mutation_percentage, data_acquisition_device, optimization_communication_device, fom_num, optimization_device, zernike_polynomial_mode, radial_order
+    return (num_init_parents, num_init_children, init_voltage, filename, num_parents, 
+            num_children, mutation_percentage, data_acquisition_device, optimization_communication_device, 
+            fom_num, optimization_device, zernike_polynomial_mode, radial_order)
 
 if __name__ == "__main__":
     print('You meant to run GeneticAlgorithm.py')
