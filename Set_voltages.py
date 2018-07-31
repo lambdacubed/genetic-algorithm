@@ -13,7 +13,18 @@ import optimization_communication_devices as opt_com_devices
 import optimization_devices
 import initialization_functions as init_f
 def send_file(opt_comm_device, opt_device):
-    """ This sets voltages on the mirror from a file of actuator voltages
+    """
+    Sends voltages to the mirror from a file.
+
+    Read genes from a file and then send them to the mirror.
+
+    Parameters
+    ----------
+    opt_comm_device : object
+        Optimization communication device used to communicate with an optimization device
+    opt_device : object
+        Optimization the file is being sent to.
+
     """
     while True:
         print('Please input the filename contained in the ', opt_device.default_directory, ' folder (include the file extension):')
@@ -21,7 +32,10 @@ def send_file(opt_comm_device, opt_device):
         saved_genes = opt_device.read_genes(filename, opt_device.num_genes)  # read the saved voltages from the given file
         
         print('You are setting voltages for deformable mirror')
-        print('Actuator voltages are: ', opt_device.zernike_to_voltages(saved_genes))   # show the operator what voltages they are sending to the mirror
+        if opt_device.zernike_polynomial_mode == True:
+            print('Actuator voltages are: ', opt_device.zernike_to_voltages(saved_genes))   # show the operator what voltages they are sending to the mirror
+        else:
+            print('Actuator voltages are: ', saved_genes)   # show the operator what voltages they are sending to the mirror
         if opt_device.fits_object(saved_genes):
             opt_comm_device.write_to_object(saved_genes, opt_device) # send the voltages to the mirror
         else:
@@ -41,7 +55,18 @@ def send_file(opt_comm_device, opt_device):
 
 
 def send_genes(opt_comm_device, opt_device):
-    """This sets constant voltages on the mirror which are determined within the function
+    """
+    Sends constant voltages to the mirror.
+
+    ...
+
+    Parameters
+    ----------
+    opt_comm_device : object
+        Optimization communication device used to communicate with an optimization device
+    opt_device : object
+        Optimization the voltages are being sent to.
+
     """
     if opt_device.zernike_polynomial_mode == True:
         print("You can't send a constant voltage in zernike mode.")
@@ -74,6 +99,19 @@ def send_genes(opt_comm_device, opt_device):
 
 
 def test_actuators(opt_comm_device, opt_device):
+    """
+    Test individual actuators.
+
+    ...
+
+    Parameters
+    ----------
+    opt_comm_device : object
+        Optimization communication device used to communicate with an optimization device
+    opt_device : object
+        Optimization the voltages are being sent to.
+
+    """
     if opt_device.zernike_polynomial_mode == True:
         print("You can't test actuators in zernike mode.")
         exit()

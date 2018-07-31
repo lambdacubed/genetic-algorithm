@@ -17,8 +17,26 @@ import matplotlib.pyplot as plt
 import data_acquisition_devices as daq_devices
 import optimization_communication_devices as opt_com_devices
 
-# TODO change reading/writing files for optimization devices at the end
+# TODO comment the file saving stuff at the end, and save diff directory
+
 def save_different_directory(default_directory):
+    """
+    Find the directory the user wants.
+
+    There is a default directory input, but the user can decide to change this 
+    directory to the directory they want.
+
+    Parameters
+    ----------
+    default_directory : str
+        The default directory to use
+
+    Returns
+    -------
+    str
+        The directory the user wishes to use
+
+    """
     print("The default directory is " + default_directory)
     print("Would you like to save to a different directory? Enter 'y' or 'n'")
     while True:
@@ -35,32 +53,29 @@ def save_different_directory(default_directory):
         else:
             print('You did not enter a y or n')
 
-def anything_else():    # determine if the user wants to save anything else from the algorithm
-	while True:
-		print('Would you like to do anything else? (y or n)')  
-		doing_more = input()    # see if the user wants to do more with the given data
-		if doing_more == 'y' or doing_more == 'n':
-			break   # exit the infinite loop
-		print('You did not enter a y or n')
-	return doing_more
+def anything_else():
+    """
+    Determine if the users wants to save anything else from the algorithm.
+    
+    ...
+    
+    Returns
+    -------
+    str
+        'y' or 'n' denoting if the user wants to save anything else.
+    
+    """
+    while True:
+    	print('Would you like to do anything else? (y or n)')  
+    	doing_more = input()    # see if the user wants to do more with the given data
+    	if doing_more == 'y' or doing_more == 'n':
+    		break   # exit the infinite loop
+    	print('You did not enter a y or n')
+    return doing_more
 
 def genetic_algorithm():
     """
-    Summary line.
-
-    Extended description of function.
-
-    Parameters
-    ----------
-    arg1 : int
-        Description of arg1
-    arg2 : str
-        Description of arg2
-
-    Returns
-    -------
-    int
-        Description of return value
+    Run the genetic algorithm.
 
     """
     

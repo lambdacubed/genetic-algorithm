@@ -12,6 +12,24 @@ import copy
 import matplotlib.cm as cm
 
 def pico_FOM(data, fom_num):
+    """
+    Calculate the figure of merit for the picoscope.
+
+    ...
+
+    Parameters
+    ----------
+    data : array
+        The data from the picoscope
+    fom_num : int
+        The figure of merit calculation you'd like to use.
+
+    Returns
+    -------
+    int, float
+        Figure of merit of picoscope data.
+
+    """
     if fom_num == "test":   # if the daq device is being tested
         plt.plot(data)
         plt.xlabel("Sample number")
@@ -29,7 +47,24 @@ def rgb2gray(rgb):
 
 
 def ic_FOM(frameout, fom_num):
-    
+    """
+    Calculate the figure of merit for the imaging source cameras.
+
+    ...
+
+    Parameters
+    ----------
+    frameout : array
+        The image in a numpy array
+    fom_num : int
+        The figure of merit calculation you'd like to use.
+
+    Returns
+    -------
+    int, float
+        Figure of merit of IC image.
+
+    """
     imgray = rgb2gray(frameout) # convert rgb image into grayscale
     if fom_num == "test":   # if the daq device is being tested
         plt.imshow(frameout,cmap=plt.get_cmap('gray'))
@@ -85,19 +120,23 @@ def ic_FOM(frameout, fom_num):
     	return fom
     
 def NI_DAQ_FOM(voltage, fom_num):
-    """This is the figure of merit function for the NI_DAQ single voltage hardware
-    
+    """
+    Calculate the figure of merit for the NI DAQ.
+
+    ...
+
     Parameters
     ----------
-    voltage: voltage, variable type unknown -> maybe float
+    voltage: maybe float
         the averaged voltage read by the NI DAQ hardware
-    fom_num : figure of merit number, integer
-        This determines which figure of merit function to run
-    
+    fom_num : int
+        The figure of merit calculation you'd like to use.
+
     Returns
     -------
-    figure_of_merit: figure_of_merit, variable type unknown -> maybe float
-        the measure of how good the mirror shape achieved a desired goal
+    float
+        Figure of merit of NI DAQ voltage.
+
     """
     if fom_num == "test":   # if the daq device is being tested
         print(voltage)  
@@ -112,6 +151,24 @@ def NI_DAQ_FOM(voltage, fom_num):
     	return -voltage
     
 def Andor_FOM(image, fom_num):
+    """
+    Calculate the figure of merit for the picoscope.
+
+    ...
+
+    Parameters
+    ----------
+    image : array
+        The image captured by the Andor camera in a numpy array
+    fom_num : int
+        The figure of merit calculation you'd like to use.
+
+    Returns
+    -------
+    float
+        Figure of merit of Andor image.
+
+    """
     if fom_num == "test":   # if the daq device is being tested
         plt.imshow(image,cmap=plt.get_cmap('gray')) # plot the image
         plt.colorbar()

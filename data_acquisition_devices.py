@@ -14,14 +14,14 @@ import file_functions as file_f     # use this for reading and writing to files
 import os   # this gives information about the current working directory
 
 # These libraries are needed for IC cameras
-#from pyicic.IC_ImagingControl import *
-#import copy
-#
-## This is needed for the NI DAQ
-#import win32com.client  # Python ActiveX Client for calling and running LabVIEW
-#
-## this is needed for the picoscope
-#from picoscope import ps2000a
+from pyicic.IC_ImagingControl import *
+import copy
+
+# This is needed for the NI DAQ
+import win32com.client  # Python ActiveX Client for calling and running LabVIEW
+
+# this is needed for the picoscope
+from picoscope import ps2000a
 
 # These libraries are needed for the Andor camera
 import ctypes   # this is used for being a wrapper to the c functions in the Andor dll
@@ -40,18 +40,22 @@ PIXEL_FORMAT_TOP_DOWN = ('Y800', 'YGB0', 'YGB1', 'UYBY', 'Y16')
 
 
 def initialize_daq_device(device_string, fom_num):
-    """This returns the data acquisition object corresponding to the name in device_string
+    """
+    This returns the data acquisition object corresponding to the name in device_string
+
+    ...
 
     Parameters
     ----------
-    device_string : data acquisition device, str
-        The name of the device to initialize
-    fom_num : figures of merit number, int or str
-        The int corresponding to the desired figure of merit calculation
-
+    device_string : str
+        A string naming which daq device to use.
+    fom_num : int
+        An int denoting which figure of merit this daq device will be using.
+    
     Returns
     -------
-    data acquisition class object
+    daq_device 
+        A data acquisition device object
     """
     if (device_string == DAQ_DEVICES[0]):  # if the device name is "Andor"
         return Andor(device_string, fom_num)
@@ -71,7 +75,20 @@ def initialize_daq_device(device_string, fom_num):
 
 
 class daq_device(object):
-    """This is a data acquisition device used for figure of merit calculation
+    """
+    This is a data acquisition device used for figure of merit calculation
+    
+    ...
+
+    Attributes
+    ----------
+    device : str
+        The device which this class corresponds to.
+    initialize_array : numpy array
+        A numpy array containing information for initializing this device from its .ini file.
+    fom_num : int
+        The figure of merit number this device will be using.
+
     """
     def __init__(self, device, fom_num):
         self.device = device    # save which acquisition device is being used
@@ -82,9 +99,47 @@ class daq_device(object):
 
 
 class Andor(daq_device):
-    """This sets up image acquisition for the Andor camera in Peter's chamber (DL-604M-OEM)
     """
-    def __init__(self, device_string, fom_num):		
+    This sets up image acquisition for the Andor camera in the LWFA chamber (DL-604M-OEM)
+
+    ...
+
+    Attributes
+    ----------
+    andor_dll : unsure what type
+        The dll for the Andor camera.
+    number_x_pixels : int
+        The number of pixels in the horizontal direction of the pictures the camera will take
+    number_y_pixels : int
+        The number of pixels in the vertical direction of the pictures the camera will take
+    image : numpy array
+        The image the Andor camera just captured
+    
+    Methods
+    -------
+    figure_of_merit
+        Measure the figure of merit of the system.
+    shut_down
+        Shut down the Andor camera.
+
+    """
+
+    def __init__(self, device_string, fom_num):	
+        """
+        Initialize the Andor camera.
+
+        This will turn on the camera, set all of the relevant parameters in the .ini file like 
+        exposure time, gain, binning, etc. and depending on the figure of merit number it will 
+        also generate a mask and take a background image.
+
+        Parameters
+        ----------
+        device_string : str
+            A string naming which daq device to use.
+        fom_num : int
+            An int denoting which figure of merit this daq device will be using.
+
+        """
         super().__init__(device_string, fom_num)    # call the daq_device __init__ function
         
         read_mode_top = int(self.initialize_array[0])    # readout mode options: 0 Full Vertical binning;    1 Multi-Track;  2 Random-Track;  3 Single-Track;    4 Image;
@@ -357,13 +412,17 @@ class Andor(daq_device):
             self.gaussian_mask = self.mask * self.gaussian_weight
 
     def __check_success(self, error_value, function_name):
-        """Check whether or not the program was able to perform the given function for the Andor camera
+        """
+        Determine if calling the Andor function worked
+        
+        There are various functions which set exposure time or check if the cooler is on. This function
+        makes sure the return value from all of those functions was DRV_SUCCESS.S
         
         Parameters
         ----------
-        error_value : error value, int
+        error_value : int
             This is the error value returned from any Andor function
-        function_name : function name, string
+        function_name : str
             This is a string which denotes which function returned this error value
         """
         if (error_value != DRV_SUCCESS):    # if the error value wasn't success
@@ -371,7 +430,16 @@ class Andor(daq_device):
             exit()
 
     def figure_of_merit(self):
-        """Determine the figure of merit using the selected device
+        """
+        Measure the figure of merit.
+
+        Acquire an image using the Andor camera and measure its figure of merit.
+
+        Returns
+        -------
+        int, float
+            The figure of merit of the image which was taken
+
         """
         self.__acquire()
         self.image = self.image - self.background_image
@@ -384,11 +452,13 @@ class Andor(daq_device):
             self.image = self.image * self.gaussian_mask
             return figure_of_merit_f.Andor_FOM(self.image, self.fom_num)
 
-    
     def __acquire(self):
-        """This function acquires an image from the andor camera
         """
+        Acquire an image from the Andor camera.
 
+        The Andor camera acquires an image and then saves the image as self.image
+
+        """
         # Wait until the camera is in an idle state
         camera_status = ctypes.c_int()
         error_value = self.andor_dll.GetStatus(ctypes.byref(camera_status))
@@ -427,16 +497,54 @@ class Andor(daq_device):
         self.image = image  # save the image
 
     def shut_down(self):
-        """Shut down the Andor camera
+        """
+        Shut down the Andor camera.
+
+        ...
+
         """
         error_value = self.andor_dll.ShutDown()
         self.__check_success(error_value, "Shut down")
 
 
 class NI_DAQ(daq_device):
-    """This sets up data acquisition from the NI box connected to the computer via PCI
     """
-    def __init__(self, device_string, fom_num):		
+    NI data acquisition device
+
+    National Instruments data acquisition device connected to the computer via a PCI cable
+
+    Attributes
+    ----------
+    number_of_reads : int
+        Number of voltage readings to take from the device
+    pci0VI : LabVIEW reference
+        A LabVIEW VI reference in python to the VI which reads voltages
+    voltage : float
+        The voltage read from the device
+
+    Methods
+    -------
+    figure_of_merit
+        Measure the figure of merit of the system.
+    shut_down
+        Shut down the NI DAQ device.
+
+    """
+
+    def __init__(self, device_string, fom_num):
+        """
+        Initialize the national instruments daq device.
+
+        Set the number of reads to take from the NI DAQ device and initialize the LabVIEW VI reference.
+
+        Parameters
+        ----------
+        device_string : str
+            A string naming which daq device to use.
+        fom_num : int
+            An int denoting which figure of merit this daq device will be using.
+
+        """
         super().__init__(device_string, fom_num)    # call the daq_device __init__ function
         
         self.number_of_reads = int(self.initialize_array[0])  # determine number voltages to average over
@@ -445,16 +553,29 @@ class NI_DAQ(daq_device):
         self.pci0VI = LabVIEW.getvireference(directory_path + '\\NI_DAQ\\get_average_photodiode_voltage.vi')    # get the path to the LabVIEW VI
 
     def figure_of_merit(self):
-        """Determine the figure of merit using the selected device
+        """
+        Determine the figure of merit by using the voltages from the NI DAQ device
+
+        Measure the voltages from the device and then determine the figure of merit
+
+        Returns
+        -------
+        int, float
+            Figure of merit of the data collected
+
         """
         self.__acquire()    # acquire voltages
         return figure_of_merit_f.NI_DAQ_FOM(self.voltage, self.fom_num)
 
     
     def __acquire(self):
-        """Compute figure of merit that is average voltage reading from DAQ
         """
-        
+        Read the voltages from the NI DAQ device.
+
+        Call the LabVIEW VI which reads voltages from the device and then save the 
+        output of that VI as the attribute voltage. 
+
+        """
         self.pci0VI._FlagAsMethod("Call")    # Flag "Call" as the method to run the VI in this path
         self.pci0VI.setcontrolvalue('error in (no error)', 0)   # set error in
         self.pci0VI.setcontrolvalue('number of reads', self.number_of_reads)   # set addresses
@@ -468,18 +589,64 @@ class NI_DAQ(daq_device):
             input()
             exit()
         self.voltage = voltage  # save the voltage
-           
-
 
     def shut_down(self):
-        """Nothing needs to be done to shut down the NI DAQ device
+        """
+        Nothing needs to be done to shut down the NI DAQ device.
+
         """
         return
 
 class IC(daq_device):
-    """This class sets up data acquisition for (theoretically) all cameras from the imaging source
     """
-    def __init__(self, device_string, fom_num):		
+    This class sets up data acquisition for (theoretically) all cameras from the imaging source.
+
+    This sets all of the camera properties relevant to a given camera. It utilizes the py-ic-ic wrapper 
+    downloaded from github for the IC C library given on the imaging source website. It seems to mostly
+    work, but it takes a few tries to figure out how to use this program with each model of camera. 
+    Test out different parameters in the .ini file until you get a good image from the camera.
+
+    Attributes
+    ----------
+    ic_ic : idk what type
+        IC library grabber.
+    cam : idk what type
+        Camera being used.
+    software_trigger : bool
+        A boolean value which determines whether to use a software trigger or not.
+    video_index : int
+        An index which determines which video format the camera will be using.
+    width : int
+        The horizontal number of pixels used in the image being captured.
+    height : int
+        The vertical number of pixels used in the image being captured.
+    depth : int
+        The number of color channels used in the image being captured.
+
+    Methods
+    -------
+    figure_of_merit
+        Measure the figure of merit of the system.
+    shut_down
+        Shut down the Imaging Source camera.
+
+    """
+
+    def __init__(self, device_string, fom_num):
+        """
+        Initialize the Imaging Source camera.
+
+        Set all of the parameters for the chosen Imaging Source camera so that it is ready to 
+        take an image.
+
+        Parameters
+        ----------
+        device_string : str
+            A string naming which daq device to use.
+        fom_num : int
+            An int denoting which figure of merit this daq device will be using.
+
+        """
         super().__init__(device_string, fom_num)     # call the daq_device __init__ function
 
         
@@ -603,14 +770,22 @@ class IC(daq_device):
         self.__acquire()
 
     def figure_of_merit(self):
-        """Determine the figure of merit using the selected device
+        """
+        Determine the figure of merit using the Imaging Source camera.
+
+        Capture an image using the imaging source camera and then calculate the figure of merit.
+        
         """
         self.__acquire()    # acquire an image from the camera
         return figure_of_merit_f.ic_FOM(self.frameout, self.fom_num)
 
     
     def __acquire(self):
-        """Compute figure of merit that is average voltage reading from DAQ
+        """
+        Capture an image.
+
+        Capture an image using the given IC camera and then save the image as frameout.
+
         """
         self.cam.reset_frame_ready()    # reset the frame ready flag to False so that we can wait for the frame to be ready
 
@@ -632,7 +807,9 @@ class IC(daq_device):
         
 
     def shut_down(self):
-        """Snut down the camera and the IC grabber
+        """
+        Shut down the camera and close the IC grabber.
+
         """
         self.cam.stop_live() # stop capturing video from the camera
         self.cam.close() # shut down the camera
@@ -642,7 +819,48 @@ class IC(daq_device):
 
 
 class Picoscope(daq_device):
-    def __init__(self, device_string, fom_num):	
+    """
+    The picoscope as a data acquisition device.
+
+    ...
+
+    Attributes
+    ----------
+    channels : tuple of str
+        The available channels to use in the program, channel A and channel B.
+    signal_channel : str
+        The channel which te signal will be read from.
+    nSamples : int
+        The number of samples to take when acquiring data.
+    ps : object from ps2000a library
+        The reference to the picoscope device.
+    data : list or numpy array
+        The data acquired when reading the picoscope device.
+
+    Methods
+    -------
+    figure_of_merit
+        Measure the figure of merit of the system.
+    shut_down
+        Shut down the Imaging Source camera.
+
+    """
+
+    def __init__(self, device_string, fom_num):
+        """
+        Set up the picoscope for data acquisition.
+
+        Determine the channel to read from, how to trigger the device, how many samples to read, etc.
+        to acquire data properly.
+
+        Parameters
+        ----------
+        device_string : str
+            A string naming which daq device to use.
+        fom_num : int
+            An int denoting which figure of merit this daq device will be using.
+
+        """
         super().__init__(device_string, fom_num)    # call the daq_device __init__ function
 
         self.channels = ('A', 'B')  # the only possible channels are 'A' and 'B'
@@ -693,41 +911,94 @@ class Picoscope(daq_device):
         self.ps = ps    # save the picoscope object
 
     def figure_of_merit(self):
-        """Determine the figure of merit using the selected device
+        """
+        Determine the figure of merit.
+
+        Measure data using the picoscope device and then calculate the figure of merit
+
+        Returns
+        -------
+        int, float
+            Figure of merit of the data collected
+
         """
         self.__acquire()    # acquire a signal from the picoscope
         return figure_of_merit_f.pico_FOM(self.data, self.fom_num)
 
     
     def __acquire(self):
-        """Acquire the waveform from the picoscope
+        """
+        Acquire picoscope data.
+
+        Run the picoscope data acquisition process, wait until it is ready to be read, get the data,
+        and save this data as self.data.
+
         """
         self.ps.runBlock()  # run the picoscope data acquisition 
         self.ps.waitReady() # wait until the scope is ready
         self.data = self.ps.getDataV(self.signal_channel, self.nSamples, returnOverflow=False)  # get the data from the picoscope
 
     def shut_down(self):
-        """Shut down the picoscope
+        """
+        Shut down the picoscope.
+
         """
         self.ps.stop()  # stop the picoscope running
         self.ps.close() # close the picoscope connection
 
 
 class Test(object):
-    def __init__(self, fom_num):		
-        self.fom_num = fom_num
+    """
+     A data acquisition device which is used for testing
 
-    def figure_of_merit(self):
-        """Determine the figure of merit using the selected device
+    This device doesn't actually talk to anything. It is used when testing parts of the program 
+    unrelated to the data acquisition process. This allows the program to run faster and not run
+    into any issues that might occur within the data acquisition process.
+
+    Attributes
+    ----------
+    fom_num : int
+        An int denoting which figure of merit this daq device will be using.
+
+    Methods
+    -------
+    figure_of_merit
+        Measure the figure of merit of the system.
+    shut_down
+        Shut down the Imaging Source camera.
+
+    """
+
+    def __init__(self, fom_num):
+        """
+        Save the fom_num.
+
 
         Parameters
         ----------
-        fom_num: figure of merit number, int
-            This determines which calculation to use when calculating the figure of merit
+        fom_num : int
+            Number denoting which figure of merit to use.
+
+        """
+        self.fom_num = fom_num
+
+    def figure_of_merit(self):
+        """
+        Return a random number.
+
+        Returns
+        -------
+        float
+            The figure of merit is a random number with a Gaussian distribution(mean = 0, std dev = 1)
+
         """
         return np.random.randn()
 
     def shut_down(self):
+        """
+        There is nothing to shut down because this is not a real daq device.
+
+        """
         return
          
 
@@ -743,8 +1014,8 @@ if __name__ == "__main__":
             break
         else:
             print("You didn't enter a correct index. Try again.")
-
-
+    
+    
     device = initialize_daq_device(DAQ_DEVICES[index], fom_num)    # initialize the device
     for i in range(num_tests):  # for num_test times
         device.figure_of_merit()    # acquire data from the device

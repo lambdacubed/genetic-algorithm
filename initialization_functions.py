@@ -6,6 +6,8 @@ change_others() -- This function checks if the user wants to change any other va
 initialize() -- This function contains all default values and defines all initial variables.
 """
 
+# TODO comment the entire file lol
+
 import msvcrt
 import file_functions as file_f
 import optimization_devices
@@ -15,7 +17,10 @@ import data_acquisition_devices as daq_devices
 INITIALIZATION_FILE = "\\genetic_algorithm.ini"
 
 def change_value(datatype, lowerbound = None, upperbound = None):
-    """Change any variable value in the program utilizing user input.
+    """
+    Change any variable value in the program utilizing user input.
+
+    ...
 
     Parameters
     ----------
@@ -82,7 +87,17 @@ def change_value(datatype, lowerbound = None, upperbound = None):
     return new_value
 
 def change_others():
-    """This function checks if the user wants to change any other variables."""
+    """
+    Check if the user wants to change other variables.
+
+    ...
+
+    Returns
+    -------
+    bool
+        Bool denoting if the user wants to change any other variables
+
+    """
     print('Would you like to change anything other variables?')
     print('Enter y or n')
     while True:
@@ -96,29 +111,40 @@ def change_others():
 
 
 def initialize():
-    """This function defines all of the user specified values.
+    """
+    This function initializes all important variables.
     
-    Parameters
-    ----------
+    This function reads the INITIALIZATION_FILE or genetic_algorithm.ini and sets all of the variables
+    according to the values in that function.
 
     Returns
     -------
-    num_genes : number of genes, int
-        This is the number of genes (or actuators) each person has.
-    num_init_parents : number of initial parents, int
+    num_init_parents : int
         This is the number of parents which starts the program.
-    num_init_children : number of initial children, int
+    num_init_children : int
         This is the number of children to make from the first parent(s).
-    init_voltage : intial voltage, float
+    init_voltage : float
         When starting, the parent(s) genes will either all be an initial voltage or loaded from a file.
-    filename : name of a previous genes file, string
+    filename : string
         When starting, the parent(s) genes will either be read from 'filename' or all be the intial voltage.
-    num_parents : number of parents, int
+    num_parents : int
         The number of parents to be used after the first iteration.
-    num_children : number of children, int
+    num_children : int
         The number of children to be used after the first iteration.
-    mutation_percentage : mutation percentage, float
+    mutation_percentage : float
         This value is proportional to both the number of genes which change and the amount the mutating genes change.
+    data_acquisition_device : str
+        A string denoting which data acquisition device to use.
+    optimization_communication_device : str
+        A string denoting which optimization communication device to use.
+    fom_num : int
+        An int denoting which figure of merit calculation to use for the daq device.
+    optimization_device : str
+        A string denoting which optimization device to use.
+    zernike_polynomial_mode : bool
+        Whether to use a Zernike polynomial or actuator basis.
+    radial_order : int
+        If using Zernike polynomials as a basis, what is the highest radial order to use.
     """
 
     initialization_variables = file_f.read_initialization_variables(INITIALIZATION_FILE)	# read all of the initialization variables from the ini file

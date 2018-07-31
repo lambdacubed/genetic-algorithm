@@ -8,11 +8,10 @@ import time
 import os
 FOM_GRAPH_FOLDER = '\saved_graphs\\'    # directory for mirror graphs
 
-
-
-
 def write_figures_of_merit(figures_of_merit, filename):
     """Write figures of merit to a .csv file.
+
+    ...
 
     Parameters
     ----------
@@ -29,21 +28,34 @@ def write_figures_of_merit(figures_of_merit, filename):
 
 
 def read_initialization_variables(filename):
-	"""This function reads in the initialization variables from a file.
+    """This function reads in the initialization variables from a file.
     
-    It reads in the third element of every even numbered line using a space separated format. The values are all strings
-    """
-	initialization_array = np.empty(0,'float')  # initialize a numpy array of size 0
-	directory_path = os.path.dirname(os.path.abspath(__file__)) # get the current directory's path
-	with open(directory_path + filename, 'r', newline='') as filein:    # open the file to be read from
-		tsvreader = csv.reader(filein, delimiter = " ")    # make the values space separated
-		line_number = 1	# keep track of the line 
-		for row in tsvreader:		# go through each row in the file
-			if ((line_number % 2) == 0):	# if the line is an even line
-				initialization_array = np.append(initialization_array, row[2])	# save the 3rd element of each line
-			line_number += 1	# increment the line_number
-	return initialization_array
+    It reads in the third element of every even numbered line using a space separated format. 
+    The values are all strings.
+    
+    Parameters
+    ----------
+    filename : str
+        The file to read the initialization variables from.
 
+    
+    Returns
+    -------
+    numpy array
+        This is an array of strings of the third element of the lines in the file
+    
+    """
+    initialization_array = np.empty(0,'float')  # initialize a numpy array of size 0
+    directory_path = os.path.dirname(os.path.abspath(__file__)) # get the current directory's path
+    with open(directory_path + filename, 'r', newline='') as filein:    # open the file to be read from
+    	tsvreader = csv.reader(filein, delimiter = " ")    # make the values space separated
+    	line_number = 1	# keep track of the line 
+    	for row in tsvreader:		# go through each row in the file
+    		if ((line_number % 2) == 0):	# if the line is an even line
+    			initialization_array = np.append(initialization_array, row[2])	# save the 3rd element of each line
+    		line_number += 1	# increment the line_number
+    return initialization_array
+    
 if __name__ == "__main__":
     print('You meant to run GeneticAlgorithm.py')
 	#print(read_device_properties('\\NI DAQ\\NI DAQ properties.txt'))
