@@ -13,7 +13,7 @@ DEVICES : tuple
 
 """
 
-# TODO comment the lines in this code
+
 #import pyvisa   # Use this when using the pyvisa code in send_to_board pci
 import win32com.client  # Use this when using the LabVIEW VI in send_to_board # Python ActiveX Client
 import numpy as np  # general useful python library
@@ -85,8 +85,10 @@ class PCI_DM_comm(object):
         actuator addresses.
 
         """
-        self.ACTUATOR_ADDRESSES = [[0x34, 0x54, 0x28, 0x38, 0x08, 0x04, 0x24, 0x50, 0x58, 0x2C, 0x30, 0x1C, 0x10, 0x14, 0x0C, 0x00, 0x3C, 0x20, 0x5C],
-                                   [0x24, 0x5C, 0x58, 0x54, 0x20, 0x10, 0x08, 0x1C, 0x14, 0x0C, 0x04, 0x00, 0x3C, 0x38, 0x34, 0x30, 0x2C, 0x28]]
+        self.ACTUATOR_ADDRESSES = [[0x34, 0x54, 0x28, 0x38, 0x08, 0x04, 0x24, 0x50, 0x58, 0x2C, 
+                                    0x30, 0x1C, 0x10, 0x14, 0x0C, 0x00, 0x3C, 0x20, 0x5C],
+                                   [0x24, 0x5C, 0x58, 0x54, 0x20, 0x10, 0x08, 0x1C, 0x14, 
+                                    0x0C, 0x04, 0x00, 0x3C, 0x38, 0x34, 0x30, 0x2C, 0x28]]
 
         self.voltage_multiplier = 2.625   # this is the constant used to multiply the genes to get the correct voltage output
         self.waiting_time = 0.1 # seconds
@@ -121,7 +123,7 @@ class PCI_DM_comm(object):
 
         """
         if  mirror.fits_object(genes): # if the genes don't break the mirror
-            if mirror.zernike_polynomial_mode == True:
+            if mirror.zernike_polynomial_mode == True:  # if the mirror is in zernike polynomial mode
                 voltages = mirror.zernike_to_voltages(genes)
             else:
                 voltages = genes
@@ -143,7 +145,7 @@ class PCI_DM_comm(object):
             The array of voltages being sent to board 4
 
         """
-        #There are 3 different sets of code to write to the board: calling the LabVIEW VIs themselves, calling functions in a LabVIEW dll, and using pyVISA 
+        #There are 2 different sets of code to write to the board: calling the LabVIEW VIs themselves and using pyVISA 
         # This is the code for running the LabView VI which communicates with the deformable mirror 
         self.pci5VI.setcontrolvalue('values to write', voltages0.tolist())   # set values to write
         self.pci5VI.Call()   # Run the VI
@@ -264,7 +266,7 @@ class USB_DM_comm(object):
         self.usbVI.setcontrolvalue('Actuator 1 to 37', voltages.tolist())   # set values to write
         self.usbVI.Call()   # Run the VI
         result = self.usbVI.getcontrolvalue('ERROR STATUS')    # retrieve error out
-
+        # TODO test error out to see if successful
        
 class Test_comm(object):
     """

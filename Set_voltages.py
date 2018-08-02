@@ -7,7 +7,6 @@ testing.
 
 """
 
-# TODO comment the lines in this code
 
 import numpy as np  # general useful python library
 import file_functions as file_f     # used to read from files
@@ -29,13 +28,13 @@ def send_file(opt_comm_device, opt_device):
         Optimization the file is being sent to.
 
     """
-    while True:
+    while True: # create infinite loop
         print('Please input the filename contained in the ', opt_device.default_directory, ' folder (include the file extension):')
-        filename = input()
+        filename = input()  # determine file to read from
         saved_genes = opt_device.read_genes(filename, opt_device.num_genes)  # read the saved voltages from the given file
         
         print('You are setting voltages for deformable mirror')
-        if opt_device.zernike_polynomial_mode == True:
+        if opt_device.zernike_polynomial_mode == True:  # if the opt_device is in zernike polynomial mode
             print('Actuator voltages are: ', opt_device.zernike_to_voltages(saved_genes))   # show the operator what voltages they are sending to the mirror
         else:
             print('Actuator voltages are: ', saved_genes)   # show the operator what voltages they are sending to the mirror
@@ -46,12 +45,12 @@ def send_file(opt_comm_device, opt_device):
 
         print("Finished testing? (Enter 'y' if done and anything else if not done)")
         done = input()  # determine if the user is done
-        if (done == 'y'):
+        if (done == 'y'):   # if the user is done
             print("\nSending all 0's to the mirror")
             test_voltages = np.zeros(opt_device.num_genes)    # set the actuator voltages back to 0    
             print("Voltages are: ", test_voltages)
             if opt_device.fits_object(test_voltages):
-                opt_comm_device.write_to_object(test_voltages, opt_device)   # write the set of voltages to the mirror
+                opt_comm_device.write_to_object(test_voltages, opt_device)   # write 0's to the mirror
             else:
                 print("Voltages would've broken mirror.")
             break
@@ -71,7 +70,7 @@ def send_genes(opt_comm_device, opt_device):
         Optimization the voltages are being sent to.
 
     """
-    if opt_device.zernike_polynomial_mode == True:
+    if opt_device.zernike_polynomial_mode == True:  # if the opt_device is in Zernike polynomial mode
         print("You can't send a constant voltage in zernike mode.")
         exit()
     num_genes = opt_device.num_genes  # there are 37 mirror voltages
@@ -95,7 +94,7 @@ def send_genes(opt_comm_device, opt_device):
             test_voltages = np.zeros(opt_device.num_genes)    # set the actuator voltages back to 0    
             print("Voltages are: ", test_voltages)
             if opt_device.fits_object(test_voltages):
-                opt_comm_device.write_to_object(test_voltages, opt_device)   # write the set of voltages to the mirror
+                opt_comm_device.write_to_object(test_voltages, opt_device)  # write 0's to the mirror
             else:
                 print("Voltages would've broken mirror.")
             break
@@ -115,10 +114,10 @@ def test_actuators(opt_comm_device, opt_device):
         Optimization the voltages are being sent to.
 
     """
-    if opt_device.zernike_polynomial_mode == True:
+    if opt_device.zernike_polynomial_mode == True:  # if the opt_device is in zernike polynomial mode
         print("You can't test actuators in zernike mode.")
         exit()
-    while True: # test actuators until done testing
+    while True: # create infinite loop
         test_voltages = np.zeros(opt_device.num_genes)    # initialize the array of test voltages to 0
 
         while True: # create a while loop until the actuator to be tested is determined
@@ -130,10 +129,10 @@ def test_actuators(opt_comm_device, opt_device):
                 break
             print("You didn't enter a number between 0 and", opt_device.num_genes-1)
 
-        while True:     
+        while True: # create infinite loop until the actuator voltage is determined
             print("What would you like the singular test actuator's voltage to be?")
             print("\tNote: The voltages for all of the other actuators will be 0")
-            voltage = float(input())    # get the voltage from the operator
+            voltage = float(input())    # get the voltage from the user
             test_voltages[actuator_index] = voltage
             if opt_device.fits_object(test_voltages):
                 break
@@ -142,7 +141,7 @@ def test_actuators(opt_comm_device, opt_device):
 
         print("Voltages are: ", test_voltages)
         if opt_device.fits_object(test_voltages):
-            opt_comm_device.write_to_object(test_voltages, opt_device)   # write the set of voltages to the mirror
+            opt_comm_device.write_to_object(test_voltages, opt_device)  # write the set of voltages to the mirror
         else:
             print("Voltages would've broken mirror.")
         print("Finished testing? (Enter 'y' if done and anything else if not done)")
@@ -152,7 +151,7 @@ def test_actuators(opt_comm_device, opt_device):
             test_voltages = np.zeros(opt_device.num_genes)    # set the actuator voltages back to 0    
             print("Voltages are: ", test_voltages)
             if opt_device.fits_object(test_voltages):
-                opt_comm_device.write_to_object(test_voltages, opt_device)   # write the set of voltages to the mirror
+                opt_comm_device.write_to_object(test_voltages, opt_device)  # write 0's to the mirror
             else:
                 print("Voltages would've broken mirror.")
             break
@@ -162,14 +161,14 @@ def test_actuators(opt_comm_device, opt_device):
     
 if __name__ == "__main__":
 
-    while True:
+    while True: # create a while loop to determine if the user is in zernike polynomial mode
         print("Are you using the Zernike polynomial mode for writing voltages to the mirror?")
         print("Enter 'y' or 'n'")
         response = input()
         if response == 'y':
             zernike_polynomial_mode = True
             print("What radial order are you using? Enter an integer.\nThe current value is 4.")
-            radial_order = init_f.change_value('int', 0, 9)   # change the variable's value
+            radial_order = init_f.change_value('int', 0, 9)   # determine what radial order to use
             break
         elif response == 'n':
             zernike_polynomial_mode = False
@@ -178,7 +177,7 @@ if __name__ == "__main__":
         else:
             print("You didn't enter a 'y' or an 'n'")
 
-
+    # determine which optimization device the user wants to use
     print('\nThese are the optimization devices you can send voltages to (only send voltages to mirrors): ')
     print(optimization_devices.OPT_DEVICES)
     print("Please enter the index of the device you would like to use.")
@@ -192,7 +191,7 @@ if __name__ == "__main__":
         else:
             print("You didn't enter a correct index.")
 
-
+    # determine what optimization communication device the user wants to use
     print('\nThese are the available devices to send voltages to the mirror you chose: ')
     print(opt_com_devices.DEVICES)
     print("Please enter the index of the device you would like to use.")
@@ -206,6 +205,7 @@ if __name__ == "__main__":
         else:
             print("You didn't enter a correct index.")
 
+    # determine what mirror testing mode the use wants to use
     print("Would you like to send a constant voltage to the mirror, send a file to the mirror, or test individual actuators?")
     print('Enter "voltage", "file", or "test" to specify which one you would like to do.')
     while True:

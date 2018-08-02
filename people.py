@@ -8,7 +8,6 @@ genes performed.
 
 """
 
-# TODO comment the lines in this code
 
 import numpy as np
 import math     # this library has math functions like sine and cosine
@@ -111,7 +110,7 @@ class parent(person):
             if (opt_device.zernike_polynomial_mode == True):
                 for i in range(self.num_genes):
                     if (i==0):
-                        self.genes[i] = init_voltage
+                        self.genes[i] = init_voltage    # make the first zernike coef equal the initial voltage
                     else:
                         self.genes[i] = 0
             else:
@@ -139,7 +138,8 @@ class parent_group(object):
     	The array containing the parent class.
     
     """
-    def __init__(self, num_parents, opt_device, init_voltage = None, filename = None, all_people = None):   # construct a group of parents based on inputs
+    def __init__(self, num_parents, opt_device, init_voltage = None, 
+                 filename = None, all_people = None):   # construct a group of parents based on inputs
         """
         Initialize the group of parents.
     
@@ -163,13 +163,13 @@ class parent_group(object):
         self.num_parents = num_parents      # keep track of the number of genes in each parent
         if not (init_voltage is None) and not (filename is None):   # if both an initial voltage and another person's genes are entered
         	print('Error: You tried to create a parent from another person and using an initial voltage')
-        if not (all_people is None):    # if indices of the best children and parents were given
+        if not (all_people is None):    # if the best children and parents were given
         	parents = np.empty(0, parent)   # initialize the array of parents
         	for i in range(num_parents):
         		parents = np.append(parents, parent(opt_device, None, all_people.people[i].genes))
         	self.parents = parents  # make the new parents array the class object
         elif not (init_voltage is None):    # if an initial voltage is given
-        	self.parents = np.full((num_parents),parent(opt_device, init_voltage),parent,'C')    # create an array of parents where every gene is the initial voltage
+        	self.parents = np.full((num_parents),parent(opt_device, init_voltage),parent,'C')    # create parents using the initial voltage
         elif not (filename is None):    # if a filename to read from was given
         	file_genes = opt_device.read_genes(filename, opt_device.num_genes)  # read the genes from a file
         	self.parents = np.full((num_parents),parent(opt_device, None, file_genes),parent,'C')    # create an array of parents from the file genes
@@ -326,7 +326,7 @@ class child_group(object):
         mutation = mutation_percentage / 100    # convert the percentage to a decimal
         mutation_squared = mutation*mutation    # square the mutation percentage for later use
         for i in range(self.num_children):   # Mutate each child
-        	self.children[i].mutate_child(mutation_squared, opt_device)        # call the mutate attribute    
+        	self.children[i].mutate_child(mutation_squared, opt_device) # mutate each child
     
 class person_group(object):
     """
@@ -366,9 +366,9 @@ class person_group(object):
             Group of children
     
         """
-        self.num_genes = parent_group.num_genes     # the number of genes in each child is the same as the number of genes in each parent
-        self.num_people = parent_group.num_parents + child_group.num_children        # set the number of children
-        self.people = list(parent_group.parents) + list(child_group.children)    # initialize the children matrix
+        self.num_genes = parent_group.num_genes     # the number of genes is the same for everyone
+        self.num_people = parent_group.num_parents + child_group.num_children   # set the number of people
+        self.people = list(parent_group.parents) + list(child_group.children)   # create the people list
     
     def test_and_sort_people(self, opt_device, daq_device, opt_comm_device):
         """

@@ -18,7 +18,6 @@ PIXEL_FORMAT_TOP_DOWN : tuple
     instead of down up.
 
 """
-# TODO comment the lines in this code
 
 
 import figure_of_merit_functions as figure_of_merit_f
@@ -319,6 +318,7 @@ class Andor(daq_device):
         error_value = self.andor_dll.SetImage(horizontal_binning, vertical_binning, horizontal_start, horizontal_end, vertical_start, vertical_end);
         self.__check_success(error_value, "Set Image")
 
+        # Take a background image
         while True:
             print("\nInput 'capture' to capture and display the Andor camera image and 'ready' when ready to save it as background image")
             command = input()
@@ -333,7 +333,16 @@ class Andor(daq_device):
         self.__acquire()
         self.background_image = self.image
 
-        if fom_num == 2:
+        if fom_num == 1:
+            print("You are using a binary mask figure of merit function")
+        elif fom_num == 2:
+            print("You are using Gaussian weight to the pixels with a binary mask for the figure of merit")
+        elif fom_num == 'test':
+            print("You are using the test figure of merit function")
+        else:
+            print("That figure of merit function has not been defined")
+
+        if fom_num == 2:    # Determine the gaussian weighting function to use
             while True:
                 print("\nInput 'capture' to capture and display the Andor camera image and 'ready' when ready to take an image (minus the background) to determine the image centroid for the Gaussian mask")
                 command = input()
@@ -361,15 +370,25 @@ class Andor(daq_device):
 
             mu_x = (moment10-1)/moment00
             mu_y = (moment01-1)/moment00
-
-            mu_x = 28
-            mu_y = 32
             print("Image centroid at (", mu_x, ", ", mu_y, ")")
+
+            print("What would you like the x coordinate of the Gaussian mask to be?")
+            x_gauss = float(input())
+            print("What would you like the y coordinate of the Gaussian mask to be?")
+            y_gauss = float(input())
+
+            mu_x = x_gauss
+            mu_y = y_gauss
+
+            print("Gaussian center at (", mu_x, ", ", mu_y, ")")
+
+            print("What would you like the standard deviation of the Gaussian mask to be?")
+            sigma_gauss = float(input())
 
             #sigma of 5 used for focusing beam
             #signam 9 used for repositioning
-            sigma_x = 5
-            sigma_y = 5
+            sigma_x = sigma_gauss
+            sigma_y = sigma_gauss
 
             gaussian_weight = np.zeros_like(image)
             for x in range(gaussian_weight.shape[1]):
@@ -382,7 +401,7 @@ class Andor(daq_device):
             figure_of_merit_f.Andor_FOM(self.gaussian_weight, "test")
 
 
-        if fom_num == 1 or fom_num == 2:
+        if fom_num == 1 or fom_num == 2:    # determine an elliptical binary mask in which to sum the pixels
             while True:
                 print("\nInput 'capture' to capture and display the Andor camera image minus the background and 'ready' when ready to determine the mask in which to sum the pixels")
                 command = input()
@@ -514,7 +533,7 @@ class Andor(daq_device):
         ...
 
         """
-        error_value = self.andor_dll.ShutDown()
+        error_value = self.andor_dll.ShutDown() # shut down the camera
         self.__check_success(error_value, "Shut down")
 
 

@@ -15,7 +15,6 @@ OPT_DEVICES : tuple
 
 """
 
-# TODO comment the lines in this code
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.interpolate as interpolate
@@ -52,11 +51,9 @@ def initialize_opt_device(which_opt_device, zernike_polynomial_mode, radial_orde
         The optimization object that will be used by the algorithm
 
     """
-    if which_opt_device == OPT_DEVICES[0]:
+    if which_opt_device == OPT_DEVICES[0]:  # 37_square_grid_mirror_1
         return XineticsDM37_1(zernike_polynomial_mode, radial_order)
-    elif which_opt_device == OPT_DEVICES[1]:
-        return XineticsDM37_2(zernike_polynomial_mode, radial_order)
-    elif which_opt_device == OPT_DEVICES[2]:
+    elif which_opt_device == OPT_DEVICES[1]:    #37_mirror_test
         return Mirror_test_37()
     else:
         print("You didn't enter a correct mirror.")
@@ -93,7 +90,7 @@ class deformable_mirror(object):
             The conversion of genes
 
         """
-        return np.array(genes)
+        return np.array(genes)  # the default conversion is none
 
     def array_conversion_USB(self,genes):
         """
@@ -108,7 +105,7 @@ class deformable_mirror(object):
             The conversion of genes
 
         """
-        return np.array(genes)
+        return np.array(genes)  # the default conversion is none
 
 
     def is_mirror_safe(self, voltages, max_voltage, min_voltage, actuator_neighbors, max_difference):
@@ -137,9 +134,10 @@ class deformable_mirror(object):
             returns true if the voltages don't break the mirror
 
         """
-        valid_genes = True    # the child is good until proven bad
+        valid_genes = True    # the voltages are good until proven bad
         for i in range(len(actuator_neighbors)):      # Test every actuator value with its neighbors' values
-            valid_genes = valid_genes and (abs(voltages[actuator_neighbors[i][0]]-voltages[actuator_neighbors[i][1]]) <= max_difference)  # test voltage difference between neighboring actuators is less than 30
+            valid_genes = valid_genes and (abs(voltages[actuator_neighbors[i][0]]-voltages[actuator_neighbors[i][1]])
+                                          <= max_difference)  # test voltage difference between neighboring actuators is less than 30
         
         within_range = True # the voltages are in the accepted voltage range unless proven to be out of range
         for i in range(voltages.size):  # for each gene
@@ -216,25 +214,27 @@ class square_grid_mirror(deformable_mirror):
             The highest radial order of Zernike polynomials to use if in Zernike polynomial mode
 
         """
-        self.dm_array = dm_array
-        self.numpy_dm_array = np.array(dm_array)
-        self.num_genes = np.sum(self.numpy_dm_array >= 0)
+        self.dm_array = dm_array    # save the deformable mirror shape
+        self.numpy_dm_array = np.array(dm_array)    # save it as a numpy array
+        self.num_genes = np.sum(self.numpy_dm_array >= 0)   # determine the number of valid indices in the dm array
         directory_path = os.path.dirname(os.path.abspath(__file__)) # get the current directory's path
-        self.default_directory = directory_path + MIRROR_VOLTAGES_FOLDER
+        self.default_directory = directory_path + MIRROR_VOLTAGES_FOLDER    # set the default directory
 
         # make the neighbor list an accessible attribute of the object actuator_array
         self.dm_actuator_neighbors = self.actuator_neighbors()  # make the neighbors list an attribute
 
-        self.zernike_polynomial_mode = zernike_polynomial_mode
+        self.zernike_polynomial_mode = zernike_polynomial_mode  # set the zernike polynomial mode
         self.radial_order = radial_order
-        self.num_zernike_coefficients = int(((radial_order+1)*(radial_order+1) + (radial_order+1))/2)
+        self.num_zernike_coefficients = int(((radial_order+1)*(radial_order+1) + 
+                                             (radial_order+1))/2)   # determine the number of zernike polynomials used from the radial order
 
-        if self.zernike_polynomial_mode == True:
+        if self.zernike_polynomial_mode == True:    # if in zernike polynomial mode
             self.num_genes = self.num_zernike_coefficients
-            zern_polynomial_matrix = self.generate_zernike_polynomial_matrix(radial_order, self.num_zernike_coefficients)
-            xy_to_radius, xy_to_theta = self.generate_xy_to_radiustheta()
-            self.zernike_look_up_table = self.generate_zernike_look_up_table(self.num_zernike_coefficients, zern_polynomial_matrix, xy_to_radius, xy_to_theta)
-            self.default_directory = directory_path + MIRROR_ZERNIKE_FOLDER
+            zern_polynomial_matrix = self.generate_zernike_polynomial_matrix(radial_order, self.num_zernike_coefficients)   # create zernike polynomials
+            xy_to_radius, xy_to_theta = self.generate_xy_to_radiustheta()   # create maps from cartesian to polar
+            self.zernike_look_up_table = self.generate_zernike_look_up_table(self.num_zernike_coefficients, zern_polynomial_matrix, 
+                                                                             xy_to_radius, xy_to_theta) # define all of the zernike polynomials
+            self.default_directory = directory_path + MIRROR_ZERNIKE_FOLDER # change the default directory
 
 
     def actuator_neighbors(self):
@@ -352,20 +352,6 @@ class square_grid_mirror(deformable_mirror):
         """
         Generate matrix which defines the Zernike polynomials.
 
-        ...
-
-        Parameters
-        ----------
-        radial_order : int
-            The maximum radial order Zernike polynomial to be used
-        num_coefficients : int
-            The number of Zernike polynomials to generate
-
-        Returns
-        -------
-        Array of array
-            An array which defines the Zernike polynomials
-
     	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     	//		Example of zernike_polynomial_matrix with a radial order of 2 and not normalized															//
     	//																																					//
@@ -382,23 +368,37 @@ class square_grid_mirror(deformable_mirror):
     	//																																					//
     	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+        Parameters
+        ----------
+        radial_order : int
+            The maximum radial order Zernike polynomial to be used
+        num_coefficients : int
+            The number of Zernike polynomials to generate
+
+        Returns
+        -------
+        Array of array
+            An array which defines the Zernike polynomials
+
+
         """
-        factorials = np.array([1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800])
-        rows = num_coefficients
-        columns = radial_order + 2
-        zernike_polynomial_matrix = np.zeros((rows, columns))
-        for n in range(radial_order+1):
-            zernike_polynomial_term = (int)((n*n + n)/2)
-            while (zernike_polynomial_term < (((n+1)*(n+1) + (n+1)) / 2)):
-                angular_order = (int)(2 * (zernike_polynomial_term-n) - n*n)
+        factorials = np.array([1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800]) # define the first few factorials
+        rows = num_coefficients # each row is a coefficient
+        columns = radial_order + 2  
+        zernike_polynomial_matrix = np.zeros((rows, columns))   # initialize the matrix
+        for n in range(radial_order+1): # for each radial order
+            zernike_polynomial_term = (int)((n*n + n)/2)    # this is the starting zernike polynomial term
+            while (zernike_polynomial_term < (((n+1)*(n+1) + (n+1)) / 2)):  # while we haven't hit the next radial order
+                angular_order = (int)(2 * (zernike_polynomial_term-n) - n*n)    # Determine the angular order of this zernike polynomial
                 if (angular_order == 0):
                     neumann_factor = 2
                 else:
                     neumann_factor = 1
-                for j in range((int)((n-abs(angular_order))/2)+1):
-                	zernike_polynomial_matrix[zernike_polynomial_term][n-2*j] = ((pow(-1, j) * factorials[n - j] / (factorials[j]*factorials[(int)((n+angular_order)/2)-j]*factorials[(int)((n-angular_order)/2) - j])))
+                for j in range((int)((n-abs(angular_order))/2)+1):  # define the zernike polynomial
+                	zernike_polynomial_matrix[zernike_polynomial_term][n-2*j] = ((pow(-1, j) * factorials[n - j] / 
+                                                                               (factorials[j]*factorials[(int)((n+angular_order)/2)-j]*factorials[(int)((n-angular_order)/2) - j])))
                 	#zernike_polynomial_matrix[zernike_polynomial_term][n-2*j] *= np.sqrt((2*n+2)/(neumann_factor*np.pi)) # normalize to create an orthonormal basis
-                zernike_polynomial_matrix[zernike_polynomial_term][columns-1] = angular_order
+                zernike_polynomial_matrix[zernike_polynomial_term][columns-1] = angular_order   # save the angular order at the end of the row
                 zernike_polynomial_term += 1
         return zernike_polynomial_matrix
 
@@ -418,13 +418,14 @@ class square_grid_mirror(deformable_mirror):
         """
         cartesian_to_theta_matrix = np.zeros_like(self.dm_array, dtype='float')
         cartesian_to_radius_matrix = np.zeros_like(self.dm_array, dtype = 'float')
-        center_index = (len(self.dm_array)-1)/2
-        radius = math.sqrt(center_index**2 + (center_index/2)**2)
+        center_index = (len(self.dm_array)-1)/2 # determine the central index of the matrix
+        radius = math.sqrt(center_index**2 + (center_index/2)**2)   # determine the maximum radius of the matrix
         for row_i in range(len(self.dm_array)):
         	for col_j in range(len(self.dm_array[row_i])):   
         		if self.dm_array[row_i][col_j] != -1:     # make sure the index at (i,j) is represents a real actuator
-        			cartesian_to_theta_matrix[row_i][col_j] = math.atan2(center_index - row_i, col_j - center_index)   # 3 is the center pixel
-        			cartesian_to_radius_matrix[row_i][col_j] = math.sqrt((center_index-col_j)*(center_index-col_j) + (center_index-row_i)*(center_index-row_i))/radius	# sqrt(10) is the greatest radial distance, so I'm normalizing r:[0,1]
+        			cartesian_to_theta_matrix[row_i][col_j] = math.atan2(center_index - row_i, col_j - center_index)   # define theta at (x,y)
+        			cartesian_to_radius_matrix[row_i][col_j] = math.sqrt((center_index-col_j)*(center_index-col_j) + 
+                                                                (center_index-row_i)*(center_index-row_i))/radius	# define pho at (x,y)
         return cartesian_to_radius_matrix, cartesian_to_theta_matrix        
 
 
@@ -457,12 +458,12 @@ class square_grid_mirror(deformable_mirror):
         for row_i in range(len(self.dm_array)):
             for col_j in range(len(self.dm_array[row_i])):   
                 if self.dm_array[row_i][col_j] != -1:     # make sure the index at (i,j) is represents a real actuator
-                    for zernike_polynomial_term in range(num_coefficients):
+                    for zernike_polynomial_term in range(num_coefficients): # for each zernike polynomial
                         value = 0.0
                         for x in range(zernike_polynomial_matrix.shape[1] - 1):
-                        	if (zernike_polynomial_matrix[zernike_polynomial_term][x] != 0):
-                        		value += zernike_polynomial_matrix[zernike_polynomial_term][x] * pow(cartesian_to_radius_matrix[row_i][col_j],x)
-                        	if ( x == (zernike_polynomial_matrix.shape[1]-2)):
+                        	if (zernike_polynomial_matrix[zernike_polynomial_term][x] != 0):    # if the zernike value != 0
+                        		value += zernike_polynomial_matrix[zernike_polynomial_term][x] * pow(cartesian_to_radius_matrix[row_i][col_j],x)    # evaluate the radial part of the zernike polynomial
+                        	if ( x == (zernike_polynomial_matrix.shape[1]-2)):  # multiply by the angular part of the zernike polynomial
                         		x += 1
                         		if (zernike_polynomial_matrix[zernike_polynomial_term][x] < 0):
                         			value *= math.sin(-1 * zernike_polynomial_matrix[zernike_polynomial_term][x] * cartesian_to_theta_matrix[row_i][col_j])
@@ -496,7 +497,7 @@ class square_grid_mirror(deformable_mirror):
         		if self.dm_array[row_i][col_j] != -1:     # make sure the index at (i,j) is represents a real actuator
         			sum = 0.0
         			for coef_term in range(zernike_coefficients.size):
-        				sum += self.zernike_look_up_table[row_i][col_j][coef_term] * zernike_coefficients[coef_term]
+        				sum += self.zernike_look_up_table[row_i][col_j][coef_term] * zernike_coefficients[coef_term]    # sum all of the zernike coefficients at that index
         			mirror[row_i][col_j] = sum
         return mirror
 
@@ -543,28 +544,34 @@ class square_grid_mirror(deformable_mirror):
             plt.ion()   # enable interactive mode so we can continuously draw on the graph
             plt.show()  # show the plot window
 
+        # create the mirror array
         if self.zernike_polynomial_mode == True:
             current_mirror_array = self.zernike_to_mirror(current_genes)
             best_mirror_array = self.zernike_to_mirror(best_genes)
         else:
             current_mirror_array = self.voltages_to_mirror(current_genes)
             best_mirror_array = self.voltages_to_mirror(best_genes)
-
-        current_x_spacing = np.linspace(0,len(self.dm_array[0])-1,len(self.dm_array[0]))  # TODO get this from mirror
+        
+        # determine current mirror array grid
+        current_x_spacing = np.linspace(0,len(self.dm_array[0])-1,len(self.dm_array[0]))  
         current_y_spacing = np.linspace(0,len(self.dm_array)-1,len(self.dm_array))
         X, Y = np.meshgrid(current_x_spacing, current_y_spacing)
 
-        mask = np.where(~np.isnan(current_mirror_array), True, False)   # create grid the same as mirror array but if the value is nan in mirror array, its value will be false, if the value isn't nan, the mask value will be true
-
+        # generate x and y masks for where the mirror is defined on the square grid
+        mask = np.where(~np.isnan(current_mirror_array), True, False)   # create grid the same as mirror array but if the value is nan, its value will be false, otherwise it will be true
         X_masked = X[mask]
         Y_masked = Y[mask]
+
+        # apply the masks to the current and best mirror
         current_mirror_array_masked = current_mirror_array[mask]
         best_mirror_array_masked = best_mirror_array[mask]
 
+        # create new grid with N^2 row and and column length
         new_x_spacing = np.linspace(0,len(self.dm_array[0])-1,len(self.dm_array[0])**2)
         new_y_spacing = np.linspace(0,len(self.dm_array)-1,len(self.dm_array)**2)
         new_X, new_Y = np.meshgrid(new_x_spacing, new_y_spacing)
 
+        # interpolate the mirror over this grid
         interp_current_mirror = interpolate.griddata((X_masked, Y_masked), current_mirror_array_masked, (new_x_spacing[None,:], new_y_spacing[:,None]), method='cubic')
         interp_best_mirror = interpolate.griddata((X_masked, Y_masked), best_mirror_array_masked, (new_x_spacing[None,:], new_y_spacing[:,None]), method='cubic')
 
@@ -719,10 +726,10 @@ class XineticsDM37_1(square_grid_mirror):
             The genes to be tested after being mapped so the index corresponds to the correct actuator
 
         """
-        mapped_genes = np.array([genes[1], genes[21], genes[8], genes[26], genes[0], genes[35], genes[25], genes[9], genes[11], genes[20], 
-                                 genes[2], genes[27], genes[13], genes[3], genes[7], genes[19], genes[12], genes[36], genes[10], genes[34], 
-                                 genes[23], genes[24], genes[22], genes[18], genes[31], genes[29], genes[30], genes[32], genes[15], genes[17], 
-                                 genes[16], genes[28], genes[33], genes[4], genes[14], genes[6], genes[5]])
+        mapped_genes = np.array([genes[1], genes[25], genes[2], genes[36], genes[0], genes[27], genes[21], genes[11], genes[9], genes[12], 
+                                 genes[8], genes[35], genes[19], genes[7], genes[3], genes[13], genes[20], genes[26], genes[10], genes[28], 
+                                 genes[23], genes[22], genes[24], genes[14], genes[30], genes[33], genes[32], genes[31], genes[17], genes[15], 
+                                 genes[16], genes[34], genes[29], genes[6], genes[18], genes[4], genes[5]])
         return mapped_genes
 
     def read_genes(self, filename, num_genes):

@@ -1,6 +1,6 @@
 This is a genetic algorithm used for machine learning. It is a black-box optimization technique originally 
 developed by O. Albert and was published in Optics Letters, Vol. 25, No. 15, August 1, 2000. It was then 
-moved to python with some adjustments to get rid of any parts that were no longer used. 
+moved to python with some improvements written by Mark Mathis markmath@umich.edu.
 
 
 
@@ -43,25 +43,6 @@ Then, go into genetic_algorithm.ini and let "device1" be an option.
 Note: the device name "device1" or whatever you choose, cannot have any space in it
 
 
-
-
-There a number of important variables that should be readily accessible to 
-anyone using the program. I have listed what they are and their locations.
-They should all be at the top of the program.
-
-
-WAITING_TIME - time between writing to the mirror and measuring the figure of merit. 
-location: people.py
-
-
-ADF_FOLDER - directory to store mirror files (as ascii data files)
-
-location: file_functions.py
-
-
-FOM_GRAPH_FOLDER - directory to store figure of merit graph data (as csv files)
-
-location: file_functions.py
 
 
 
