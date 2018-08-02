@@ -728,7 +728,7 @@ class XineticsDM37_1(square_grid_mirror):
         """
         mapped_genes = np.array([genes[1], genes[25], genes[2], genes[36], genes[0], genes[27], genes[21], genes[11], genes[9], genes[12], 
                                  genes[8], genes[35], genes[19], genes[7], genes[3], genes[13], genes[20], genes[26], genes[10], genes[28], 
-                                 genes[23], genes[22], genes[24], genes[14], genes[30], genes[33], genes[32], genes[31], genes[17], genes[15], 
+                                 genes[23], genes[22], genes[24], genes[14], genes[31], genes[33], genes[32], genes[30], genes[17], genes[15], 
                                  genes[16], genes[34], genes[29], genes[6], genes[18], genes[4], genes[5]])
         return mapped_genes
 
@@ -883,11 +883,11 @@ class XineticsDM37_1(square_grid_mirror):
                 tsvreader = csv.reader(filein, delimiter = '\t')    # make the values tab separated
                 for row in tsvreader:   # for each row in the file
                     if len(row) == 2:   # if the number of values in the row is 2
-                        if int(row[0]) <= num_genes:    # the first number is the index, only read in num_genes genes
+                        if int(float(row[0])) <= num_genes:    # the first number is the index, only read in num_genes genes
                             new_gene_array = np.append(new_gene_array, float(row[1]))   #read in the second value as the gene voltage
             return new_gene_array
         except FileNotFoundError:
-            print("That adf file doesn't exist! Please enter a new file (including the .adf) within: ", new_dir_path)
+            print("That adf file doesn't exist! Please enter a new file (including the .adf) within: ", self.default_directory)
             new_filename = input()
             number_of_genes = int(num_genes)
             return self.read_adf(new_filename, number_of_genes)
@@ -993,10 +993,10 @@ class Mirror_test_37(square_grid_mirror):
             The genes to be tested after being mapped so the index corresponds to the correct actuator
 
         """
-        mapped_genes = np.array([genes[1], genes[21], genes[8], genes[26], genes[0], genes[35], genes[25], genes[9], genes[11], genes[20], 
-                                 genes[2], genes[27], genes[13], genes[3], genes[7], genes[19], genes[12], genes[36], genes[10], genes[34], 
-                                 genes[23], genes[24], genes[22], genes[18], genes[31], genes[29], genes[30], genes[32], genes[15], genes[17], 
-                                 genes[16], genes[28], genes[33], genes[4], genes[14], genes[6], genes[5]])
+        mapped_genes = np.array([genes[1], genes[25], genes[2], genes[36], genes[0], genes[27], genes[21], genes[11], genes[9], genes[12], 
+                                 genes[8], genes[35], genes[19], genes[7], genes[3], genes[13], genes[20], genes[26], genes[10], genes[28], 
+                                 genes[23], genes[22], genes[24], genes[14], genes[31], genes[33], genes[32], genes[30], genes[17], genes[15], 
+                                 genes[16], genes[34], genes[29], genes[6], genes[18], genes[4], genes[5]])
         return mapped_genes
 
 
