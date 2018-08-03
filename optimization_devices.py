@@ -1005,6 +1005,8 @@ class Dazzler(object):
 
     def __init__():
         self.max_mutation = 15  # Maximum a gene can change in one iteration
+        self.num_genes = 0
+        self.zernike_polynomial_mode == False
         print("Not implemented")
         exit()
 
@@ -1012,6 +1014,13 @@ class Dazzler(object):
         """
         Determine if genes break the Dazzler
 
+        """
+        pass
+
+    def plot_object(self, current_genes, best_genes, iteration_number):
+        """
+        Plot the dazzler spectrum.
+        
         """
         pass
 
@@ -1027,6 +1036,7 @@ class Dazzler(object):
         Write genes to a file.
         """
         pass
+
 
 if __name__ == "__main__":
     print('You meant to run GeneticAlgorithm.py')
