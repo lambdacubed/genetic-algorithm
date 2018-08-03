@@ -26,7 +26,7 @@ import time
 MIRROR_VOLTAGES_FOLDER = '\saved_mirrors\\'
 MIRROR_ZERNIKE_FOLDER = '\saved_zernike_coefficients\\'
 
-OPT_DEVICES = ("37_square_grid_mirror_1", "37_mirror_test")
+OPT_DEVICES = ("37_square_grid_mirror_1", "37_mirror_test", "Dazzler")
 
 def initialize_opt_device(which_opt_device, zernike_polynomial_mode, radial_order):
     """
@@ -55,6 +55,8 @@ def initialize_opt_device(which_opt_device, zernike_polynomial_mode, radial_orde
         return XineticsDM37_1(zernike_polynomial_mode, radial_order)
     elif which_opt_device == OPT_DEVICES[1]:    #37_mirror_test
         return Mirror_test_37()
+    elif which_opt_device == OPT_DEVICES[2]:    # Dazzler
+        return Dazzler()
     else:
         print("You didn't enter a correct mirror.")
 
@@ -999,6 +1001,32 @@ class Mirror_test_37(square_grid_mirror):
                                  genes[16], genes[34], genes[29], genes[6], genes[18], genes[4], genes[5]])
         return mapped_genes
 
+class Dazzler(object):
+
+    def __init__():
+        self.max_mutation = 15  # Maximum a gene can change in one iteration
+        print("Not implemented")
+        exit()
+
+    def fits_object(self, genes):
+        """
+        Determine if genes break the Dazzler
+
+        """
+        pass
+
+    def read_genes(self, filename, num_genes):
+        """
+        Read genes from a file
+
+        """
+        pass
+
+    def write_genes(self, genes, filename):
+        """
+        Write genes to a file.
+        """
+        pass
 
 if __name__ == "__main__":
     print('You meant to run GeneticAlgorithm.py')

@@ -20,7 +20,7 @@ import numpy as np  # general useful python library
 import os
 import ctypes   # used when using python as a wrapper for c functions
 
-DEVICES = ("PCI", "USB", "Test")
+DEVICES = ("PCI", "USB", "Test", "Dazzler_comm")
 
 def initialize_comm_device(device_string):
     """
@@ -45,6 +45,8 @@ def initialize_comm_device(device_string):
         return USB_DM_comm()
     elif device_string == DEVICES[2]:   # if the device string is "Test"
         return Test_comm()
+    elif device_string == DEVICES[3]:
+        return Dazzler_comm()
     else:
         print("Error: The given mirror communication device was incorrect.")
         exit()
@@ -303,6 +305,20 @@ class Test_comm(object):
 
         """
         pass
+
+class Dazzler_comm(object):
+
+    def __init__():
+        self.waiting_time = 0.1 # seconds between writing to dazzler and acquiring figure of merit
+        print("Not implemented")
+        exit()
+
+    def write_to_object(self, genes, opt_device):
+        """
+        Write the desired phase to the dazzler
+
+        """
+        print("Not implemented")
 
 if __name__ == "__main__":
     print('You meant to run GeneticAlgorithm.py')
